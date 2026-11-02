@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/item_form.dart';
+
 class CreateItemPage extends StatelessWidget {
   const CreateItemPage({super.key});
 
@@ -7,7 +9,7 @@ class CreateItemPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Cadastrar objeto')),
-      body: const Center(child: Text('Formulário em construção')),
+      body: const SafeArea(child: ItemForm()),
     );
   }
 }
