@@ -18,12 +18,12 @@ Este cartão deixa o serviço pronto para ser acessado pelo aplicativo. As regra
 
 ## Critérios de aceitação
 
-- [ ] O projeto no serviço de nuvem está criado no plano gratuito, sem cobrança ativa.
-- [ ] Existe uma estrutura de armazenamento com campos correspondentes a nome, descrição, local, situação e data/hora do cadastro.
-- [ ] Os nomes de campos e coleções (ou equivalentes) seguem o padrão de identificadores técnicos em inglês.
+- [x] O projeto no serviço de nuvem está criado no plano gratuito, sem cobrança ativa.
+- [x] Existe uma estrutura de armazenamento com campos correspondentes a nome, descrição, local, situação e data/hora do cadastro.
+- [x] Os nomes de campos e coleções (ou equivalentes) seguem o padrão de identificadores técnicos em inglês.
 - [ ] Um registro de teste foi criado e lido pelo console do serviço, e contém apenas dados demonstrativos.
 - [ ] Pelo menos dois integrantes têm acesso administrativo ao projeto na nuvem.
-- [ ] Os dados de acesso administrativo ao console não estão no repositório.
+- [x] Os dados de acesso administrativo ao console não estão no repositório.
 
 ## Dependências
 
@@ -35,6 +35,6 @@ Alinhar os nomes dos campos com o modelo definido no CARD-009, sem esperar a con
 
 ## Definition of Done
 
-- [ ] Atividade concluída.
+- [x] Atividade concluída.
 - [ ] Critérios de aceitação atendidos.
 - [ ] Configuração conferida por pelo menos um segundo integrante.

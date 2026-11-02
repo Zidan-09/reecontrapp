@@ -18,12 +18,12 @@ O documento do professor exige que o serviço "possua regras de acesso compatív
 
 ## Critérios de aceitação
 
-- [ ] Uma leitura de registros sem autenticação é permitida pelas regras.
-- [ ] Uma criação de registro sem autenticação é permitida pelas regras.
-- [ ] As regras foram verificadas por teste (simulador de regras do serviço ou requisição de teste), e não apenas lidas.
-- [ ] As regras adotadas estão documentadas, com justificativa de que são compatíveis com um aplicativo sem autenticação que usa apenas dados demonstrativos.
-- [ ] As regras não possuem prazo de expiração anterior ao fim do período de avaliação.
-- [ ] A equipe registrou que nenhum dado pessoal ou sensível será armazenado.
+- [x] Uma leitura de registros sem autenticação é permitida pelas regras.
+- [x] Uma criação de registro sem autenticação é permitida pelas regras.
+- [x] As regras foram verificadas por teste (simulador de regras do serviço ou requisição de teste), e não apenas lidas.
+- [x] As regras adotadas estão documentadas, com justificativa de que são compatíveis com um aplicativo sem autenticação que usa apenas dados demonstrativos.
+- [x] As regras não possuem prazo de expiração anterior ao fim do período de avaliação.
+- [x] A equipe registrou que nenhum dado pessoal ou sensível será armazenado.
 
 ## Dependências
 
@@ -37,7 +37,7 @@ O PDF não exige edição nem exclusão de registros (RB04). Se as regras també
 
 ## Definition of Done
 
-- [ ] Atividade concluída.
-- [ ] Critérios de aceitação atendidos.
-- [ ] Regras e justificativa registradas em local acessível à equipe.
+- [x] Atividade concluída.
+- [x] Critérios de aceitação atendidos.
+- [x] Regras e justificativa registradas em local acessível à equipe.
 - [ ] Configuração conferida por pelo menos um segundo integrante.

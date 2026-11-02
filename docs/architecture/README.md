@@ -57,33 +57,26 @@ Essas decisões deverão ser respeitadas durante o desenvolvimento.
 
 Alterações somente poderão ocorrer mediante aprovação da equipe.
 
-## 4. Decisões técnicas pendentes
+## 4. Decisões técnicas aprovadas de infraestrutura
 
-Algumas definições dependem de análise e aprovação posterior.
+As decisões antes pendentes foram aprovadas pela equipe e estão registradas em [`DATABASE.md`](./DATABASE.md) (CARD-002):
 
-| Aspecto | Situação |
+| Aspecto | Decisão |
 |---|---|
-| Serviço de nuvem | Pendente |
-| Banco de dados | Pendente |
-| SDK ou API de integração | Pendente |
-| Esquema físico de persistência | Pendente |
-| Regras definitivas de acesso remoto | Pendente |
-| Estratégia definitiva de timestamp | Pendente |
-| Credenciais e parâmetros de configuração | Pendente |
+| Serviço de nuvem | Firebase Firestore — plano Spark (gratuito) |
+| Banco de dados | Cloud Firestore (modo Native), coleção `items` |
+| SDK ou API de integração | FlutterFire (`firebase_core`, `cloud_firestore`) |
+| Esquema físico de persistência | Documentos conforme `DATABASE.md` |
+| Regras definitivas de acesso remoto | `allow read, create: if true; allow update, delete: if false` |
+| Estratégia definitiva de timestamp | `FieldValue.serverTimestamp()` em `created_at` |
+| Credenciais e parâmetros de configuração | Ponto único em `lib/firebase_options.dart`; identificadores públicos versionados |
 
-### 4.1 Restrições para decisões pendentes
+### 4.1 Restrições
 
-Nenhum integrante ou agente de IA deverá tratar essas definições como aprovadas.
-
-Em particular:
-
-- Não escolher um fornecedor de nuvem sem aprovação.
-- Não adicionar SDK específico antes da decisão.
-- Não criar configurações definitivas para um serviço ainda não escolhido.
-- Não incluir credenciais fictícias como se fossem reais.
-- Não implementar uma estratégia de timestamp definitiva sem considerar o serviço escolhido.
-
-As propostas poderão ser analisadas e apresentadas à equipe, mas a decisão final deverá ser aprovada antes da implementação.
+- Não alterar essas decisões sem nova aprovação da equipe.
+- Não escolher fornecedores, bancos ou SDKs adicionais sem aprovação.
+- Não versionar credenciais privadas (service accounts, chaves administrativas).
+- Não incluir credenciais fictícias como se fossem definitivas.
 
 ## 5. Princípios de desenvolvimento
 

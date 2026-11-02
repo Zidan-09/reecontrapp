@@ -76,33 +76,30 @@ As seguintes decisões já foram aprovadas e não deverão ser substituídas sem
 
 Não substituir essas tecnologias ou padrões por alternativas sem aprovação.
 
-## 5. Decisões ainda pendentes
+## 5. Decisões de infraestrutura aprovadas
 
-O agente deverá reconhecer que algumas decisões ainda não foram aprovadas.
+As decisões anteriormente pendentes foram aprovadas pela equipe e estão registradas em `DATABASE.md` (CARD-002). O agente deverá respeitá-las e não substituí-las sem nova aprovação:
 
-| Aspecto | Situação |
+| Aspecto | Decisão aprovada |
 |---|---|
-| Serviço de nuvem | Pendente |
-| Banco de dados | Pendente |
-| SDK ou API de integração | Pendente |
-| Esquema físico de persistência | Pendente |
-| Regras definitivas de acesso remoto | Pendente |
-| Estratégia definitiva de timestamp | Pendente |
-| Credenciais e parâmetros de configuração | Pendente |
+| Serviço de nuvem | Firebase Firestore — plano Spark (gratuito) |
+| Banco de dados | Cloud Firestore (modo Native), coleção `items` |
+| SDK ou API de integração | FlutterFire (`firebase_core`, `cloud_firestore`) |
+| Esquema físico de persistência | Conforme `DATABASE.md` |
+| Regras definitivas de acesso remoto | `allow read, create: if true; allow update, delete: if false` |
+| Estratégia definitiva de timestamp | `FieldValue.serverTimestamp()` em `created_at` |
+| Credenciais e parâmetros de configuração | Ponto único em `lib/firebase_options.dart` |
 
-### 5.1 Não presumir decisões pendentes
+### 5.1 Não presumir decisões não tomadas
 
-O agente não deverá:
+Para decisões que continuam abertas (por exemplo, plataforma de avaliação e destino do registro de demonstração), o agente deverá:
 
-- Escolher Supabase, Firebase, Appwrite ou outro fornecedor por conta própria.
-- Adicionar SDK de nuvem sem aprovação.
-- Criar estruturas de banco específicas de um fornecedor sem autorização.
-- Introduzir credenciais ou configurações fictícias como se fossem definitivas.
-- Considerar uma decisão técnica aprovada apenas porque apareceu em uma sugestão anterior.
+- Não escolher novos fornecedores, bancos ou SDKs sem aprovação.
+- Não criar configurações definitivas para uma decisão ainda não tomada.
+- Não introduzir credenciais ou configurações fictícias como se fossem definitivas.
+- Não considerar uma decisão técnica aprovada apenas porque apareceu em uma sugestão anterior.
 
-Se uma tarefa depender de alguma dessas decisões, o agente deverá informar a dependência e solicitar aprovação.
-
-Poderá realizar análises e apresentar uma recomendação técnica fundamentada, mas não deverá efetivar a escolha sem autorização.
+Se uma tarefa depender de uma decisão não tomada, o agente deverá informar a dependência e solicitar aprovação.
 
 ## 6. Requisitos funcionais obrigatórios
 

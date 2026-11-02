@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "775519398467",
+    "project_id": "reencontrapp",
+    "storage_bucket": "reencontrapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:775519398467:android:e953204975e38f531bc2f6",
+        "android_client_info": {
+          "package_name": "com.example.reecontrapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7hNDbHuEGXwlIej0Rk72fkx_dcz7Gshs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

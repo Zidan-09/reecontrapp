@@ -17,12 +17,12 @@ A ausência dessas informações é uma das penalidades explícitas do documento
 
 ## Critérios de aceitação
 
-- [ ] Existe uma lista completa dos parâmetros necessários para o aplicativo acessar o serviço de nuvem.
-- [ ] A forma de disponibilização (no repositório ou por instruções no README) está definida e registrada.
-- [ ] A decisão sobre o que pode ser publicado no repositório, considerando a diferença entre credenciais públicas e privadas, está registrada com justificativa (ambiguidade A1).
-- [ ] Os parâmetros estão concentrados em um único ponto do projeto.
+- [x] Existe uma lista completa dos parâmetros necessários para o aplicativo acessar o serviço de nuvem.
+- [x] A forma de disponibilização (no repositório ou por instruções no README) está definida e registrada.
+- [x] A decisão sobre o que pode ser publicado no repositório, considerando a diferença entre credenciais públicas e privadas, está registrada com justificativa (ambiguidade A1).
+- [x] Os parâmetros estão concentrados em um único ponto do projeto.
 - [ ] Alguém sem acesso ao console da nuvem consegue obter todos os parâmetros pelo repositório e pelas instruções.
-- [ ] As instruções estão prontas para serem incorporadas ao `README.md` no CARD-033.
+- [x] As instruções estão prontas para serem incorporadas ao `README.md` no CARD-033.
 
 ## Dependências
 
@@ -35,7 +35,7 @@ Concentrar os parâmetros em um único ponto facilita a leitura e a conferência
 
 ## Definition of Done
 
-- [ ] Atividade concluída.
+- [x] Atividade concluída.
 - [ ] Critérios de aceitação atendidos.
 - [ ] Parâmetros validados por um integrante que não participou da configuração.
 - [ ] Conteúdo integrado ao repositório, quando aplicável.

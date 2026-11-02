@@ -13,7 +13,7 @@ A implementação deverá respeitar a arquitetura **Feature-First + Clean Archit
 - Implementações de persistência.
 - Comunicação com serviços externos.
 
-**Importante:** o serviço de nuvem e o banco de dados ainda não foram escolhidos. Portanto, este documento estabelece contratos e responsabilidades, mas não determina SDKs, APIs, estruturas físicas ou configurações específicas de fornecedores.
+**Importante:** o serviço de nuvem foi aprovado no CARD-002 (Firebase Firestore), conforme `DATABASE.md`. Este documento estabelece os contratos e responsabilidades da camada Data; o esquema físico, as regras de acesso, a geração do timestamp e os parâmetros de configuração estão definidos em `DATABASE.md`.
 
 ## 2. Responsabilidades da camada Data
 
@@ -63,7 +63,7 @@ Inicialmente, haverá uma fonte remota:
 
 Ela deverá encapsular as operações necessárias para consultar e cadastrar registros no serviço de nuvem.
 
-A implementação concreta poderá utilizar o SDK ou a API do fornecedor escolhido futuramente.
+A implementação concreta utilizará o SDK aprovado (`cloud_firestore`, conforme `DATABASE.md`).
 
 ### 3.2 `models/`
 
@@ -268,9 +268,7 @@ Regras:
 - Deve permitir ordenação cronológica.
 - Deve ser convertido corretamente para `DateTime`.
 
-**Decisão pendente:** a estratégia definitiva de geração do timestamp será escolhida após a definição do serviço de nuvem.
-
-A preferência é utilizar um mecanismo de horário fornecido pelo servidor, quando disponível.
+**Decisão aprovada:** o timestamp é gerado pelo servidor Firestore com `FieldValue.serverTimestamp()` no campo `created_at`, conforme `DATABASE.md`.
 
 ## 8. Operação de leitura
 
@@ -501,23 +499,23 @@ As seguintes regras são obrigatórias:
 9. Não adicionar dependências sem justificativa.
 10. Não incluir credenciais privadas no repositório.
 
-## 15. Decisões pendentes
+## 15. Decisões aprovadas
 
-Antes de implementar a integração concreta, a equipe deverá aprovar:
+As decisões de infraestrutura foram aprovadas no CARD-002 e estão detalhadas em `DATABASE.md`:
 
 | Decisão | Situação |
 |---|---|
-| Serviço de nuvem | Pendente |
-| Banco de dados | Pendente |
-| SDK ou API de integração | Pendente |
-| Estrutura física da tabela/coleção | Pendente |
-| Regras de acesso remoto | Pendente |
-| Geração definitiva do timestamp | Pendente |
-| Estratégia de configuração para avaliação | Pendente |
+| Serviço de nuvem | Firebase Firestore — plano Spark (gratuito) |
+| Banco de dados | Cloud Firestore (modo Native), coleção `items` |
+| SDK ou API de integração | FlutterFire (`firebase_core`, `cloud_firestore`) |
+| Estrutura física da coleção | Conforme o esquema de `DATABASE.md` |
+| Regras de acesso remoto | `allow read, create: if true; allow update, delete: if false` |
+| Geração definitiva do timestamp | `FieldValue.serverTimestamp()` em `created_at` |
+| Estratégia de configuração para avaliação | Parâmetros em `lib/firebase_options.dart` e arquivos de plataforma versionados; instruções no `README.md` (CARD-033) |
 
-A escolha deverá considerar os requisitos acadêmicos, especialmente gratuidade, persistência, compartilhamento entre instalações e acesso sem autenticação.
+A escolha atende aos requisitos acadêmicos de gratuidade, persistência, compartilhamento entre instalações e acesso sem autenticação.
 
-Após a aprovação, atualizar este documento e `DATABASE.md` com as decisões concretas.
+Alterações nessa configuração exigem nova aprovação da equipe.
 
 ## 16. Referências
 

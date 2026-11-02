@@ -92,7 +92,16 @@ Esses arquivos estão cobertos por `.gitignore` (`**/service-account*.json`). Vi
 
 Os parâmetros são centralizados em `firebase_options.dart` (gerado por `flutterfire configure`). `LostFoundRemoteDataSource` lê desse ponto, sem duplicação, conforme `DATA_LAYER.md 11`.
 
-Instruções para o avaliador serão consolidadas no `README.md` no `CARD-033`: clonar, `flutter pub get`, `flutter run`.
+As instruções prontas para serem incorporadas ao `README.md` no `CARD-033` estão na seção 5.4.
+
+### 5.4 Instruções de execução (base para o CARD-033)
+
+Como os arquivos de configuração são versionados, um clone já contém tudo o que é necessário:
+
+1. `flutter pub get`
+2. `flutter run` em um emulador/dispositivo Android ou em um navegador (`flutter run -d chrome`).
+
+Nenhum parâmetro adicional precisa ser informado: `lib/firebase_options.dart` e `android/app/google-services.json` fornecem automaticamente os identificadores do projeto `reencontrapp`.
 
 ## 6. Regras de acesso — Firestore Security Rules
 
@@ -135,11 +144,11 @@ Definitiva após `CARD-002`: `FieldValue.serverTimestamp()` no campo `created_at
 - **Data:** `LostFoundRemoteDataSource` usará `cloud_firestore` + `firebase_core`; `LostFoundItemModel` fará `fromMap`/`toMap` com `created_at` ↔ `createdAt`.
 - **Application/Presentation:** sem impacto além da injeção via Riverpod já prevista em `DATA_LAYER.md 11` e `STATE_MANAGEMENT.md 7`.
 
-## 10. Próximos passos (Kanban)
+## 10. Configuração executada (Kanban)
 
-- `CARD-005`: criar projeto em `console.firebase.google.com`, criar database Firestore, coleção `items`, registro de teste pelo console, `flutterfire configure`.
-- `CARD-006`: aplicar e testar as Security Rules acima.
-- `CARD-007`: confirmar centralização dos parâmetros e preparar instruções do `README.md`.
+- `CARD-005`: projeto `reencontrapp` configurado, banco Firestore `(default)` ativo, coleção `items` com registros de demonstração, `flutterfire configure` executado para Android e Web (`google-services.json` e `firebase_options.dart` gerados).
+- `CARD-006`: regras da seção 6 aplicadas via `firebase deploy --only firestore:rules` e verificadas com requisições sem autenticação: leitura e criação retornaram sucesso (200) e atualização/exclusão foram negadas (403).
+- `CARD-007`: parâmetros centralizados em `lib/firebase_options.dart`, arquivos de configuração versionados, `**/service-account*.json` adicionado ao `.gitignore` e instruções de execução registradas na seção 5.4.
 
 ## 11. Referências
 

@@ -38,19 +38,21 @@ As seguintes decisões estão aprovadas:
 | Formatação | `dart format .` |
 | Análise estática | `flutter analyze` |
 
-### 2.1 Decisões pendentes
+### 2.1 Decisões de infraestrutura aprovadas
 
-As seguintes decisões ainda não foram tomadas:
+As decisões antes pendentes foram aprovadas pela equipe e estão registradas em [`DATABASE.md`](./DATABASE.md) (CARD-002):
 
-- Serviço de armazenamento em nuvem.
-- Banco de dados.
-- Estrutura física da persistência.
-- Configuração concreta da comunicação remota.
-- Estratégia definitiva de geração do timestamp.
+| Aspecto | Decisão |
+|---|---|
+| Serviço de nuvem | Firebase Firestore — plano Spark (gratuito) |
+| Banco de dados | Cloud Firestore (modo Native), coleção `items` |
+| SDK de integração | FlutterFire (`firebase_core`, `cloud_firestore`) |
+| Estrutura física | Documentos conforme o esquema de `DATABASE.md` |
+| Regras de acesso remoto | `allow read, create: if true; allow update, delete: if false` |
+| Timestamp | `FieldValue.serverTimestamp()` no campo `created_at` |
+| Parâmetros de configuração | Ponto único em `lib/firebase_options.dart` |
 
-A arquitetura deve permanecer independente dessas escolhas até que sejam aprovadas.
-
-Não assumir Supabase, Firebase, Appwrite ou qualquer outro fornecedor.
+A arquitetura deve continuar independente do fornecedor: o SDK permanece isolado na camada Data e nenhuma dessas decisões pode ser alterada sem nova aprovação da equipe.
 
 ## 3. Estilo arquitetural
 
@@ -360,9 +362,9 @@ Os detalhes técnicos deverão permanecer disponíveis para diagnóstico durante
 
 ## 11. Persistência e serviço de nuvem
 
-A escolha do serviço de nuvem permanece pendente.
+A escolha do serviço de nuvem está aprovada em [`DATABASE.md`](./DATABASE.md) (CARD-002): **Firebase Firestore**, plano Spark (gratuito).
 
-A solução selecionada deverá atender aos seguintes requisitos:
+A solução selecionada atende aos seguintes requisitos:
 
 - Plano exclusivamente gratuito compatível com a avaliação.
 - Persistência dos registros após o encerramento da aplicação.
@@ -377,9 +379,7 @@ A arquitetura deverá manter o acesso remoto isolado na camada Data.
 
 A data/hora de criação será gerada automaticamente e não poderá ser informada pelo usuário.
 
-A estratégia técnica definitiva será escolhida após a definição do serviço de nuvem.
-
-A preferência arquitetural é utilizar um mecanismo confiável de horário do servidor, quando suportado pelo fornecedor.
+A estratégia aprovada é `FieldValue.serverTimestamp()`, que gera o horário no servidor Firestore (`DATABASE.md`).
 
 ### 11.2 Segurança
 
@@ -451,7 +451,7 @@ Os documentos abaixo detalham aspectos específicos desta arquitetura:
 - `DESIGN_PATTERNS.md`: padrões de projeto e princípios adotados.
 - `STATE_MANAGEMENT.md`: gerenciamento de estado com Riverpod.
 - `DATA_LAYER.md`: organização e responsabilidades da camada Data.
-- `DATABASE.md`: requisitos de persistência e decisões pendentes.
+- `DATABASE.md`: requisitos de persistência e decisões de infraestrutura aprovadas.
 - `CODING_STANDARDS.md`: convenções de código e qualidade.
 - `AI_AGENTS.md`: instruções para agentes de inteligência artificial.
 
