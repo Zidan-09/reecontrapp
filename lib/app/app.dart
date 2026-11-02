@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'app_router.dart';
 import 'app_theme.dart';
 
 class ReencontrappApp extends StatelessWidget {
@@ -18,19 +19,8 @@ class ReencontrappApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const _PlaceholderHome(),
-    );
-  }
-}
-
-class _PlaceholderHome extends StatelessWidget {
-  const _PlaceholderHome();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reencontrapp')),
-      body: const Center(child: Text('Bem-vindo ao Reencontrapp')),
+      initialRoute: AppRouter.itemList,
+      onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
 }
