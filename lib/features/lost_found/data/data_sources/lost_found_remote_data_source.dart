@@ -12,4 +12,8 @@ class LostFoundRemoteDataSource {
 
     return snapshot.docs.map(LostFoundItemModel.fromFirestore).toList();
   }
+
+  Future<void> create(LostFoundItemModel model) async {
+    await _db.collection('items').add(model.toMap());
+  }
 }
