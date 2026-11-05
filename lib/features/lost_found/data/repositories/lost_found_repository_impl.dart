@@ -1,3 +1,4 @@
+import '../../../../core/errors/communication_failure.dart';
 import '../../domain/entities/lost_found_item.dart';
 import '../../domain/repositories/lost_found_repository.dart';
 import '../data_sources/lost_found_remote_data_source.dart';
@@ -10,36 +11,44 @@ class LostFoundRepositoryImpl implements LostFoundRepository {
 
   @override
   Future<List<LostFoundItem>> getAll() async {
-    final models = await _dataSource.getAll();
+    try {
+      final models = await _dataSource.getAll();
 
-    final items = models.map((model) => model.toEntity()).toList();
-    items.sort((first, second) {
-      final firstHasUnknownDate = first.createdAt.isAtSameMomentAs(
-        LostFoundItem.unknownCreatedAt,
-      );
-      final secondHasUnknownDate = second.createdAt.isAtSameMomentAs(
-        LostFoundItem.unknownCreatedAt,
-      );
+      final items = models.map((model) => model.toEntity()).toList();
+      items.sort((first, second) {
+        final firstHasUnknownDate = first.createdAt.isAtSameMomentAs(
+          LostFoundItem.unknownCreatedAt,
+        );
+        final secondHasUnknownDate = second.createdAt.isAtSameMomentAs(
+          LostFoundItem.unknownCreatedAt,
+        );
 
-      // Unknown dates belong last, regardless of the sentinel's numeric value.
-      if (firstHasUnknownDate != secondHasUnknownDate) {
-        return firstHasUnknownDate ? 1 : -1;
-      }
+        // Unknown dates belong last, regardless of the sentinel's numeric value.
+        if (firstHasUnknownDate != secondHasUnknownDate) {
+          return firstHasUnknownDate ? 1 : -1;
+        }
 
-      final dateComparison = second.createdAt.compareTo(first.createdAt);
-      if (dateComparison != 0) return dateComparison;
+        final dateComparison = second.createdAt.compareTo(first.createdAt);
+        if (dateComparison != 0) return dateComparison;
 
-      // Document IDs make ties independent of the remote response order.
-      return first.id.compareTo(second.id);
-    });
+        // Document IDs make ties independent of the remote response order.
+        return first.id.compareTo(second.id);
+      });
 
-    return items;
+      return items;
+    } catch (error) {
+      throw toCommunicationFailure(error);
+    }
   }
 
   @override
   Future<void> create(LostFoundItem item) async {
-    final model = LostFoundItemModel.fromEntity(item);
+    try {
+      final model = LostFoundItemModel.fromEntity(item);
 
-    await _dataSource.create(model);
+      await _dataSource.create(model);
+    } catch (error) {
+      throw toCommunicationFailure(error);
+    }
   }
 }
