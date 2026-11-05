@@ -1,6 +1,11 @@
 import '../enums/item_status.dart';
 
 class LostFoundItem {
+  /// Unknown creation time for legacy records or pending server timestamps.
+  /// This sentinel is not an actual registration date and must not be displayed
+  /// as one. It preserves the non-nullable [createdAt] contract.
+  static final DateTime unknownCreatedAt = DateTime.utc(1970);
+
   final String id;
   final String name;
   final String description;
