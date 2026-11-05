@@ -12,7 +12,28 @@ class LostFoundRepositoryImpl implements LostFoundRepository {
   Future<List<LostFoundItem>> getAll() async {
     final models = await _dataSource.getAll();
 
-    return models.map((model) => model.toEntity()).toList();
+    final items = models.map((model) => model.toEntity()).toList();
+    items.sort((first, second) {
+      final firstHasUnknownDate = first.createdAt.isAtSameMomentAs(
+        LostFoundItem.unknownCreatedAt,
+      );
+      final secondHasUnknownDate = second.createdAt.isAtSameMomentAs(
+        LostFoundItem.unknownCreatedAt,
+      );
+
+      // Unknown dates belong last, regardless of the sentinel's numeric value.
+      if (firstHasUnknownDate != secondHasUnknownDate) {
+        return firstHasUnknownDate ? 1 : -1;
+      }
+
+      final dateComparison = second.createdAt.compareTo(first.createdAt);
+      if (dateComparison != 0) return dateComparison;
+
+      // Document IDs make ties independent of the remote response order.
+      return first.id.compareTo(second.id);
+    });
+
+    return items;
   }
 
   @override
