@@ -39,14 +39,16 @@ class LostFoundItemModel {
     }
 
     // created_at is written with FieldValue.serverTimestamp() (DATABASE.md).
-    // A just-created document may still carry a null pending timestamp;
-    // failing explicitly keeps a sync gap visible instead of hiding it.
+    // Legacy documents and pending writes may not have a timestamp yet.
+    // Keep their creation time unknown instead of assigning the read time.
     final createdAtValue = map['created_at'];
     final DateTime createdAt;
     if (createdAtValue is Timestamp) {
-      createdAt = createdAtValue.toDate();
+      createdAt = createdAtValue.toDate().toUtc();
+    } else if (createdAtValue == null) {
+      createdAt = LostFoundItem.unknownCreatedAt;
     } else {
-      throw const FormatException('Missing document creation timestamp.');
+      throw const FormatException('Invalid document creation timestamp.');
     }
 
     return LostFoundItemModel(
