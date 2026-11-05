@@ -129,6 +129,31 @@ Princípio do menor privilégio: apenas leitura e criação são liberadas (`COD
 
 Definitiva após `CARD-002`: `FieldValue.serverTimestamp()` no campo `created_at` durante `create`. Resolve a ambiguidade `A2` (horário do servidor, não do dispositivo). A ordenação `orderBy('created_at', descending: true)` na consulta garante `RB03` e `RF01.4` no servidor (`CARD-013`).
 
+### 7.1 Compatibilidade de leitura — CARD-012
+
+A gravação já implementada no CARD-011 envia `created_at` junto aos demais
+campos em uma única chamada `add(model.toMap())`. O servidor define o instante
+ao processar a gravação, evitando depender do relógio do dispositivo. Em modo
+offline, esse instante corresponde ao processamento após a sincronização, não
+ao toque no botão. `toMap()` é exclusivo para criação e ignora o `createdAt`
+recebido na entidade; não deve ser reutilizado para atualizar registros.
+
+O Firestore armazena um `Timestamp`, não uma string formatada. Na leitura,
+`Timestamp.toDate().toUtc()` preenche `createdAt`, preservando o instante em UTC.
+Uma nova leitura recupera a data persistida, sem recalculá-la.
+
+Para documentos antigos sem `created_at` ou leituras com valor nulo pendente,
+o modelo usa `LostFoundItem.unknownCreatedAt` (`1970-01-01T00:00:00Z`). Esse
+marcador explícito mantém o contrato público `DateTime` não anulável e evita
+que um registro sem data interrompa toda a leitura. Não é uma data real de
+cadastro, não deve ser exibido como tal e não é persistido nem usado para
+preencher documentos antigos. Não é possível recuperar a data original desses
+documentos apenas com os campos existentes. Valores não nulos de tipo diferente
+de `Timestamp` continuam sendo rejeitados como dados inválidos.
+
+A geração no servidor segue a [documentação oficial do Firebase](https://firebase.google.com/docs/firestore/manage-data/add-data#server_timestamp).
+Nenhuma ordenação foi adicionada no CARD-012; ela permanece no CARD-013.
+
 ## 8. Resolução de ambiguidades
 
 | Ambiguidade | Decisão |
