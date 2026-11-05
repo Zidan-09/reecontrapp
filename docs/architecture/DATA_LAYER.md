@@ -306,11 +306,20 @@ Após a recuperação:
 
 Os registros deverão ser apresentados do mais recente para o mais antigo.
 
-Sempre que possível, a ordenação deverá ser realizada diretamente na consulta remota, utilizando o campo de criação em ordem decrescente.
+No CARD-013, `LostFoundRepositoryImpl.getAll()` ordena a nova lista de entidades
+após converter os Models. Compara `createdAt` como `DateTime` em ordem decrescente
+e desempata por `id` crescente. Registros com `LostFoundItem.unknownCreatedAt`
+ficam ao final, também ordenados por ID, sem modificar suas datas.
 
-A implementação não deverá depender de uma ordenação implícita do serviço.
+A consulta continua recuperando todos os documentos: `orderBy('created_at')`
+no Firestore excluiria documentos sem esse campo. Essa escolha preserva a
+compatibilidade do CARD-012 e dispensa alterações de índices ou configuração.
+Consulte `DATABASE.md`, seção 7.2, para a justificativa.
 
-Se o fornecedor não oferecer ordenação adequada, a camada Data deverá garantir a ordenação antes de retornar os registros.
+A lista recebida do Data Source não é reordenada nem alterada. Cada leitura
+produz uma nova lista ordenada, sem depender da ordem da resposta remota.
+O caso de uso `GetLostFoundItems` já repassa esse resultado; a futura listagem
+deverá consumir o caso de uso e preservar a ordem recebida.
 
 ### 8.2 Lista vazia
 

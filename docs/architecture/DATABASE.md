@@ -127,7 +127,7 @@ Princípio do menor privilégio: apenas leitura e criação são liberadas (`COD
 
 ## 7. Estratégia de timestamp
 
-Definitiva após `CARD-002`: `FieldValue.serverTimestamp()` no campo `created_at` durante `create`. Resolve a ambiguidade `A2` (horário do servidor, não do dispositivo). A ordenação `orderBy('created_at', descending: true)` na consulta garante `RB03` e `RF01.4` no servidor (`CARD-013`).
+Definitiva após `CARD-002`: `FieldValue.serverTimestamp()` no campo `created_at` durante `create`. Resolve a ambiguidade `A2` (horário do servidor, não do dispositivo). A ordenação do CARD-013 utiliza esse instante na camada Data, conforme a seção 7.2.
 
 ### 7.1 Compatibilidade de leitura — CARD-012
 
@@ -153,6 +153,31 @@ de `Timestamp` continuam sendo rejeitados como dados inválidos.
 
 A geração no servidor segue a [documentação oficial do Firebase](https://firebase.google.com/docs/firestore/manage-data/add-data#server_timestamp).
 Nenhuma ordenação foi adicionada no CARD-012; ela permanece no CARD-013.
+
+### 7.2 Ordenação — CARD-013
+
+`LostFoundRepositoryImpl.getAll()` ordena a lista completa de entidades por
+`createdAt` decrescente, usando `DateTime.compareTo`, e por `id` crescente em
+caso de empate. O marcador `LostFoundItem.unknownCreatedAt` fica sempre ao final,
+inclusive em relação a datas anteriores a 1970; entre registros sem data, o ID
+também define a ordem. Nenhum timestamp é gerado ou alterado na ordenação.
+
+Esta implementação substitui a previsão de ordenação na consulta remota:
+o [Firestore exclui documentos sem o campo usado em orderBy](https://firebase.google.com/docs/firestore/query-data/order-limit-data#limitations).
+Manter a consulta sem `orderBy` preserva os documentos antigos aceitos pelo
+CARD-012, sem consultas adicionais, migração ou alterações de índices.
+
+A ordenação ocorre em uma nova lista a cada leitura, após a conversão dos
+Models em entidades. Não altera a lista de origem, não remove registros e não
+altera a gravação. Listas vazias e unitárias continuam válidas. O caso de uso
+existente entrega essa ordem aos futuros consumidores da listagem; nenhuma
+tela ou mecanismo de atualização foi implementado neste card.
+
+Limitações: a coleção completa precisa caber em memória, como na leitura atual.
+Uma futura paginação precisará rever a estratégia para garantir ordem global.
+O marcador herdado do CARD-012 não permite distinguir uma data real exatamente
+na época Unix de uma data desconhecida. Timestamps pendentes ficam ao final
+até que uma nova leitura recupere o instante confirmado pelo servidor.
 
 ## 8. Resolução de ambiguidades
 
