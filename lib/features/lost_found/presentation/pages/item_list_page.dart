@@ -40,8 +40,13 @@ import '../widgets/lost_found_item_card.dart';
 /// at the top, and a failed refresh falls back to the CARD-014
 /// error view.
 ///
-/// Visual distinction of the situation (CARD-020) and access to the
-/// registration form (CARD-023) are handled in their own cards.
+/// Visual distinction of the situation (CARD-020) is handled in its
+/// own card. Access to the registration form (CARD-023) is a
+/// Material 3 [FloatingActionButton.extended] labeled in Portuguese,
+/// kept on the [Scaffold] so it stays visible without scrolling in
+/// loading, error, empty and data states, including long lists. The
+/// list keeps extra bottom padding so the button never covers the
+/// essential content of the last item.
 class ItemListPage extends ConsumerWidget {
   const ItemListPage({super.key});
 
@@ -150,7 +155,7 @@ class ItemListPage extends ConsumerWidget {
                   onRefresh: handleRefresh,
                   child: ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 88),
                     itemCount: items.length,
                     itemBuilder: (context, index) {
                       return LostFoundItemCard(item: items[index]);
