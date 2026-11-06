@@ -26,6 +26,11 @@ class StubRemoteDataSource implements LostFoundRemoteDataSource {
   Future<List<LostFoundItemModel>> getAll() async => models;
 
   @override
+  String generateId() {
+    throw UnsupportedError('ID allocation is not used by these read tests.');
+  }
+
+  @override
   Future<void> create(LostFoundItemModel model) async {
     throw UnsupportedError('Creation is not used by these read tests.');
   }

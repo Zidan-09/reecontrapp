@@ -42,6 +42,15 @@ class LostFoundRepositoryImpl implements LostFoundRepository {
   }
 
   @override
+  Future<String> generateId() async {
+    try {
+      return _dataSource.generateId();
+    } catch (error) {
+      throw toCommunicationFailure(error);
+    }
+  }
+
+  @override
   Future<void> create(LostFoundItem item) async {
     try {
       final model = LostFoundItemModel.fromEntity(item);
