@@ -39,10 +39,7 @@ void main() {
 
     test('read preserves the stored instant and all fields in the entity', () {
       final instant = DateTime.utc(2026, 11, 4, 15, 30, 45, 123, 456);
-      final data = {
-        ...document(),
-        'created_at': Timestamp.fromDate(instant),
-      };
+      final data = {...document(), 'created_at': Timestamp.fromDate(instant)};
 
       final model = LostFoundItemModel.fromMap(data, 'document-id');
       final item = model.toEntity();
