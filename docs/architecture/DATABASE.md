@@ -131,11 +131,11 @@ Definitiva após `CARD-002`: `FieldValue.serverTimestamp()` no campo `created_at
 
 ### 7.1 Compatibilidade de leitura — CARD-012
 
-A gravação já implementada no CARD-011 envia `created_at` junto aos demais
-campos em uma única chamada `add(model.toMap())`. O servidor define o instante
-ao processar a gravação, evitando depender do relógio do dispositivo. Em modo
-offline, esse instante corresponde ao processamento após a sincronização, não
-ao toque no botão. `toMap()` é exclusivo para criação e ignora o `createdAt`
+A gravação envia `created_at` junto aos demais campos em uma única criação
+transacional (CARD-027, seção 7.3), substituindo o `add` original do CARD-011.
+O servidor define o instante ao processar a criação, evitando depender do
+relógio do dispositivo. Não há criação offline enfileirada nesse fluxo.
+`toMap()` é exclusivo para criação e ignora o `createdAt`
 recebido na entidade; não deve ser reutilizado para atualizar registros.
 
 O Firestore armazena um `Timestamp`, não uma string formatada. Na leitura,
@@ -178,6 +178,30 @@ Uma futura paginação precisará rever a estratégia para garantir ordem global
 O marcador herdado do CARD-012 não permite distinguir uma data real exatamente
 na época Unix de uma data desconhecida. Timestamps pendentes ficam ao final
 até que uma nova leitura recupere o instante confirmado pelo servidor.
+
+### 7.3 Criação idempotente — CARD-027
+
+Decisão aprovada: gerar um auto-ID com `collection('items').doc().id` na
+primeira tentativa e conservá-lo, com os dados originais, no provider de envio.
+A geração não cria documento e não muda o esquema físico.
+
+`runTransaction` consulta esse ID. Documento ausente é criado com todos os
+campos e `FieldValue.serverTimestamp()`. Documento existente só confirma a
+operação se nome, descrição, local e situação corresponderem e `created_at`
+for um `Timestamp`; o valor desse timestamp não é comparado nem recalculado.
+Divergências falham sem escrita. Nenhuma tentativa atualiza documento existente.
+Assim, timestamp e ordenação dos CARD-012/013 permanecem preservados.
+
+As regras da seção 6 permanecem suficientes: leitura e criação, sem atualização
+ou exclusão. Não há alteração remota, fila offline ou timeout próprio. Transação
+offline falha e permite nova tentativa; sucesso exige confirmação do servidor.
+Resultado desconhecido mantém o mesmo ID, pois a criação pode ter ocorrido.
+
+A garantia é de no máximo um documento por ID conservado; sucesso também pode
+significar reconhecer a criação anterior. Não há garantia de conclusão sem
+conexão nem deduplicação entre IDs distintos. O ID fica somente na memória do
+provider e é perdido no encerramento do processo; retomar a identidade entre
+reinicializações não faz parte desta implementação.
 
 ## 8. Resolução de ambiguidades
 

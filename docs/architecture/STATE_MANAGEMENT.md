@@ -221,6 +221,27 @@ A navegação de retorno à listagem deverá ocorrer conforme o fluxo da interfa
 
 Em caso de falha, o usuário deverá permanecer em condições de corrigir os dados ou tentar novamente.
 
+### 6.4 Operação preservada — CARD-027
+
+O notifier conserva `pendingItem`, uma entidade imutável com auto-ID alocado
+pelo caso de uso/repositório e os dados da primeira tentativa. Enquanto a
+operação estiver pendente, `submit` reutiliza essa entidade mesmo se receber
+outros dados. Uma falha não a limpa; o sucesso remoto a encerra e invalida
+`itemListProvider`, preservando o CARD-028. O cadastro seguinte gera outro ID.
+
+O formulário mantém os campos bloqueados enquanto houver uma operação pendente
+e apresenta a mensagem do CARD-014 com a ação “Tentar novamente” após falha.
+O processamento e o bloqueio da ação de envio terminam quando a chamada falha;
+o bloqueio dos campos protege a associação entre identidade e dados originais.
+Voltar fica bloqueado durante o envio. Após falha é possível sair: ao reabrir,
+o formulário restaura os dados pendentes do provider, que não é `autoDispose`.
+
+Não há persistência local nem fila offline. A operação é conservada apenas na
+memória do provider, até confirmação remota ou encerramento do processo. Não
+limpar ou gerar outra identidade automaticamente após erro, timeout do SDK ou
+resultado desconhecido. A transação e seus limites estão em `DATA_LAYER.md`,
+seção 9.4, e `DATABASE.md`, seção 7.3.
+
 ## 7. Injeção de dependências
 
 O Riverpod também será utilizado para disponibilizar as dependências necessárias à aplicação.
