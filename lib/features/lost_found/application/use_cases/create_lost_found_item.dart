@@ -6,6 +6,8 @@ class CreateLostFoundItem {
 
   final LostFoundRepository _repository;
 
+  Future<String> generateId() => _repository.generateId();
+
   Future<void> call(LostFoundItem item) {
     return _repository.create(item);
   }

@@ -95,6 +95,8 @@ O contrato do repositório deverá ser declarado na camada Domain:
 abstract interface class LostFoundRepository {
   Future<List<LostFoundItem>> getAll();
 
+  Future<String> generateId();
+
   Future<void> create(LostFoundItem item);
 }
 ```
@@ -383,6 +385,31 @@ Após um cadastro bem-sucedido, o gerenciamento de estado deverá invalidar ou a
 A atualização deverá recuperar os dados persistidos, evitando manter uma lista desatualizada na interface.
 
 Essa coordenação pertence à camada Application/Presentation por meio dos providers, não ao Data Source.
+
+### 9.4 Identidade e nova tentativa — CARD-027
+
+`generateId()` aloca um auto-ID do Firestore sem criar documento. O caso de
+uso disponibiliza essa operação ao notifier, que associa o ID aos dados
+originais em uma entidade imutável antes de chamar `create`. O contrato de
+`create` exige ID preenchido e reconhece uma criação anterior correspondente.
+O repositório conserva a tradução de erros do CARD-014 nas duas operações.
+
+O Data Source executa uma transação: lê `items/{id}` e, se ausente, cria todos
+os campos com `model.toMap()`. Se presente, compara nome, descrição, local e
+situação e exige um timestamp persistido válido, sem comparar seu valor com a
+data da entidade. Correspondência confirma sucesso sem escrita; divergência
+gera erro, sem sobrescrever ou escolher outro ID. O callback não contém efeitos
+de interface. As regras existentes de leitura/criação são suficientes.
+
+Transações exigem conexão e não enfileiram o cadastro para sincronização
+offline. Uma falha libera o processamento e permite repetir a mesma operação.
+Não há timeout adicional: erro ou ausência de confirmação não provam ausência
+de gravação. O sucesso exige confirmação remota, inclusive na reconciliação.
+
+A garantia limita-se às tentativas com o mesmo ID e dados conservados. Não
+deduplica operações com IDs diferentes nem conserva identidade após encerramento
+do processo. Não há armazenamento persistente local. Veja também
+`DATABASE.md`, seção 7.3, e `STATE_MANAGEMENT.md`, seção 6.4.
 
 ## 10. Tratamento de erros
 

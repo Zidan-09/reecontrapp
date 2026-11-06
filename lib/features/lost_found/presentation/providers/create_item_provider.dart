@@ -27,6 +27,11 @@ import 'item_list_provider.dart';
 /// This file contains no widgets or navigation: screens only watch the
 /// state with `ref.watch` and trigger [submit] with `ref.read`.
 class CreateItemNotifier extends AsyncNotifier<void> {
+  LostFoundItem? _pendingItem;
+
+  /// Immutable original payload, retained in memory until remote success.
+  LostFoundItem? get pendingItem => _pendingItem;
+
   @override
   Future<void> build() async {
     // Idle: nothing submitted yet.
@@ -45,8 +50,21 @@ class CreateItemNotifier extends AsyncNotifier<void> {
 
     state = await AsyncValue.guard(() async {
       final createItem = ref.read(createLostFoundItemProvider);
-      await createItem(item);
+      if (_pendingItem == null) {
+        final id = await createItem.generateId();
+        _pendingItem = LostFoundItem(
+          id: id,
+          name: item.name,
+          description: item.description,
+          location: item.location,
+          status: item.status,
+          createdAt: item.createdAt,
+        );
+      }
+      // Retry the original operation even if another caller supplies new data.
+      await createItem(_pendingItem!);
 
+      _pendingItem = null;
       ref.invalidate(itemListProvider);
     });
   }
