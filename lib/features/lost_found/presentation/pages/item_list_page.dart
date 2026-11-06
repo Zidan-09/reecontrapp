@@ -7,7 +7,7 @@ import 'package:reecontrapp/core/errors/communication_failure.dart';
 import '../providers/item_list_provider.dart';
 import '../widgets/lost_found_item_card.dart';
 
-/// Listing screen (CARD-019, CARD-021).
+/// Listing screen (CARD-019, CARD-021, CARD-022).
 ///
 /// Consumes the listing state from CARD-015 through [itemListProvider]
 /// and loads the cloud records when opened. Each record shows name,
@@ -25,19 +25,66 @@ import '../widgets/lost_found_item_card.dart';
 /// retry goes back through loading before settling into data or a
 /// new error. The error view never shows a stale list.
 ///
-/// Visual distinction of the situation (CARD-020), manual refresh
-/// (CARD-022) and access to the registration form (CARD-023) are
-/// handled in their own cards.
+/// Manual refresh (CARD-022) re-reads the cloud through the same
+/// CARD-015 action (`ref.invalidate(itemListProvider)`), so records
+/// created by other installations appear afterwards in the
+/// repository order (newest first).
+/// Decision (ambiguity A5, RNF01.4): expose both an always-visible
+/// "Atualizar lista" button in the [AppBar] and the Material
+/// pull-to-refresh gesture ([RefreshIndicator]). The button alone
+/// guarantees discoverability; the gesture is a common complement.
+/// While a load is in flight the button is disabled and both
+/// callbacks return early on `isLoading`, so repeated taps never
+/// start simultaneous reads. Reloads keep the list visible
+/// (`skipLoadingOnReload/Refresh`) with a [LinearProgressIndicator]
+/// at the top, and a failed refresh falls back to the CARD-014
+/// error view.
+///
+/// Visual distinction of the situation (CARD-020) and access to the
+/// registration form (CARD-023) are handled in their own cards.
 class ItemListPage extends ConsumerWidget {
   const ItemListPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final itemsAsync = ref.watch(itemListProvider);
+    final isUpdating = itemsAsync.isLoading;
+
+    Future<void> handleRefresh() async {
+      if (ref.read(itemListProvider).isLoading) {
+        return;
+      }
+      ref.invalidate(itemListProvider);
+      try {
+        // ignore: unused_result, handled through itemListProvider state.
+        await ref.read(itemListProvider.future);
+      } catch (_) {
+        // Failure stays exposed through itemListProvider; the error
+        // view below shows the CARD-014 message with a retry action.
+      }
+    }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Objetos perdidos e encontrados')),
+      appBar: AppBar(
+        title: const Text('Objetos perdidos e encontrados'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Atualizar lista',
+            onPressed: isUpdating
+                ? null
+                : () {
+                    if (ref.read(itemListProvider).isLoading) {
+                      return;
+                    }
+                    ref.invalidate(itemListProvider);
+                  },
+          ),
+        ],
+      ),
       body: itemsAsync.when(
+        skipLoadingOnReload: true,
+        skipLoadingOnRefresh: true,
         loading: () => const Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -79,15 +126,39 @@ class ItemListPage extends ConsumerWidget {
         },
         data: (items) {
           if (items.isEmpty) {
-            return const Center(child: Text('Nenhum registro encontrado.'));
+            return RefreshIndicator(
+              onRefresh: handleRefresh,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.sizeOf(context).height * 0.6,
+                    child: const Center(
+                      child: Text('Nenhum registro encontrado.'),
+                    ),
+                  ),
+                ],
+              ),
+            );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(8),
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              return LostFoundItemCard(item: items[index]);
-            },
+          return Column(
+            children: [
+              if (isUpdating) const LinearProgressIndicator(),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: handleRefresh,
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(8),
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      return LostFoundItemCard(item: items[index]);
+                    },
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
