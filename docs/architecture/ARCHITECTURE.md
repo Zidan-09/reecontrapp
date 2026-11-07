@@ -50,7 +50,7 @@ As decisões antes pendentes foram aprovadas pela equipe e estão registradas em
 | Estrutura física | Documentos conforme o esquema de `DATABASE.md` |
 | Regras de acesso remoto | `allow read, create: if true; allow update, delete: if false` |
 | Timestamp | `FieldValue.serverTimestamp()` no campo `created_at` |
-| Parâmetros de configuração | Ponto único em `lib/firebase_options.dart` |
+| Parâmetros de configuração | Ponto único em `lib/firebase_options.dart`; chaves públicas em `.env.example` (injeção via `--dart-define-from-file=.env`) |
 
 A arquitetura deve continuar independente do fornecedor: o SDK permanece isolado na camada Data e nenhuma dessas decisões pode ser alterada sem nova aprovação da equipe.
 

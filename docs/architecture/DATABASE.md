@@ -27,7 +27,7 @@ Firebase Firestore Spark foi o único entre os avaliados (Firestore vs. Supabase
 - **Compartilhamento (RF05.3):** todos os clientes leem/escrevem na mesma coleção.
 - **Acesso assíncrono (RF05.4):** SDK oficial `cloud_firestore` (FlutterFire) com API `Future`/`Stream`.
 - **Sem autenticação (RB06):** Security Rules permitem `allow read, create: if true` de forma permanente, sem expiração.
-- **Avaliação sem custo (RT07):** professor executa `flutter run` com `google-services.json` versionado, sem criar conta ou inserir cartão.
+- **Avaliação sem custo (RT07):** professor executa `flutter run -d chrome --dart-define-from-file=.env` com `.env.example` versionado, sem criar conta ou inserir cartão.
 - **Timestamp confiável (RB02 / A2):** `FieldValue.serverTimestamp()` nativo, horário gerado pelo servidor Firestore.
 
 **Fator decisivo:** Supabase e Appwrite pausam projetos Free após 7 dias de inatividade (Appwrite desde 20/02/2026). Entre o envio no SIGAA (08/11) e a avaliação pode haver mais de 7 dias sem chamadas, deixando o app offline e zerando `AV03` (2,0 pts). Firestore Spark não possui pausa por inatividade.
@@ -76,7 +76,23 @@ Nenhum campo além dos acima será persistido nesta versão (sem imagem, contato
 
 ### 5.1 O que pode ser versionado (identificadores públicos)
 
-`google-services.json` em `android/app/` e `firebase_options.dart` na raiz de `lib/` contêm `apiKey`, `projectId`, `appId`, `storageBucket` e `messagingSenderId`. São identificadores públicos destinados ao cliente e **podem** ser versionados. A segurança vem das Security Rules, não do sigilo da chave.
+As chaves do cliente Firebase (`apiKey`, `projectId`, `appId`, `storageBucket`, `messagingSenderId`) são **identificadores públicos** destinados ao cliente, não credenciais privadas. A segurança vem das Security Rules (seção 6), não do sigilo da chave.
+
+Isso está coerente com o documento do professor:
+
+- **Seção 7:** proíbe apenas *credenciais privadas*.
+- **Seção 8.2:** exige que as chaves de API estejam **disponíveis** no repositório ou em instruções claras do `README.md`.
+- **Seção 8.3:** o checklist cobra que "as chaves de API e demais parâmetros necessários à integração com a nuvem foram disponibilizados".
+- **Seção 8.4:** penaliza a *ausência* de chaves e parâmetros.
+
+Como um clone precisa executar o aplicativo sem informações enviadas por fora, as chaves públicas ficam disponíveis em `.env.example` (versionado).
+
+| Arquivo | Conteúdo | Versionado? |
+|---|---|---|
+| `.env.example` | `FIREBASE_WEB_API_KEY` e `FIREBASE_ANDROID_API_KEY` (públicas) | Sim |
+| `.env` | Cópia local usada em `--dart-define-from-file=.env` | **Não** (`.gitignore`) |
+| `lib/firebase_options.dart` | Demais parâmetros; as chaves são lidas via `String.fromEnvironment` | Sim (sem chave embutida) |
+| `android/app/google-services.json` | Exigido pelo plugin Google Services no build Android | Sim (é configuração, não segredo) |
 
 `GoogleService-Info.plist` em `ios/Runner/` segue a mesma regra quando a plataforma iOS for habilitada.
 
@@ -86,22 +102,25 @@ Nenhum campo além dos acima será persistido nesta versão (sem imagem, contato
 - Chaves do Admin SDK
 - Tokens com privilégio irrestrito
 
-Esses arquivos estão cobertos por `.gitignore` (`**/service-account*.json`). Violar esta regra gera penalidade `DOC07`/`ENT04`.
+Esses arquivos estão cobertos por `.gitignore` (`**/service-account*.json`, `*.jks`, `*.keystore`, `key.properties`). Artefatos de build (`*.apk`, `*.aab`, `*.ipa`) também são ignorados (seção 8.1 do documento). Violar estas regras gera penalidade `DOC07`/`ENT04`.
+
+O histórico do Git também foi auditado no `CARD-034`: nenhum binário, diretório `build/` ou credencial privada foi versionado em nenhum commit.
 
 ### 5.3 Ponto único de configuração
 
-Os parâmetros são centralizados em `firebase_options.dart` (gerado por `flutterfire configure`). `LostFoundRemoteDataSource` lê desse ponto, sem duplicação, conforme `DATA_LAYER.md 11`.
+Os parâmetros são centralizados em `firebase_options.dart`. As chaves de API **não são hardcoded** nesse arquivo: são injetadas em tempo de compilação por `String.fromEnvironment(...)` a partir das variáveis definidas em `.env` (arquivo local ignorado pelo Git). `LostFoundRemoteDataSource` lê desse ponto, sem duplicação, conforme `DATA_LAYER.md 11`.
 
 As instruções prontas para serem incorporadas ao `README.md` no `CARD-033` estão na seção 5.4.
 
 ### 5.4 Instruções de execução (base para o CARD-033)
 
-Como os arquivos de configuração são versionados, um clone já contém tudo o que é necessário:
+Um clone já contém `.env.example`, que reúne as chaves públicas. Para executar:
 
 1. `flutter pub get`
-2. `flutter run` em um emulador/dispositivo Android ou em um navegador (`flutter run -d chrome`).
+2. `Copy-Item .env.example .env` (PowerShell) ou `cp .env.example .env` (Bash) — cria o `.env` local, que **não** é versionado.
+3. `flutter run -d chrome --dart-define-from-file=.env` para desenvolvimento, ou `flutter build web --dart-define-from-file=.env` para compilar.
 
-Nenhum parâmetro adicional precisa ser informado: `lib/firebase_options.dart` e `android/app/google-services.json` fornecem automaticamente os identificadores do projeto `reencontrapp`.
+No Android, `android/app/google-services.json` fornece automaticamente os identificadores do projeto `reencontrapp`, sem passo adicional.
 
 ## 6. Regras de acesso — Firestore Security Rules
 
@@ -207,7 +226,7 @@ reinicializações não faz parte desta implementação.
 
 | Ambiguidade | Decisão |
 |---|---|
-| A1 — credencial privada vs. pública | `apiKey`/`projectId`/`appId` são públicas e entram no repo; `private_key` de service account é segredo e não entra. |
+| A1 — credencial privada vs. pública | Chave de API do cliente é identificadora pública: fica em `.env.example` (versionado) e é injetada via `--dart-define-from-file=.env`, sem hardcode no Dart (seções 7, 8.2 e 8.3 do documento). `private_key` de service account é segredo e não entra. |
 | A2 — origem do timestamp | Servidor Firestore via `FieldValue.serverTimestamp()`. |
 | A8 — registro de teste na nuvem | Permitido, apenas dados demonstrativos (`RB05`). Decisão sobre manter/remover será registrada no `CARD-005`. |
 | A9 — arquivos gerados desnecessários | `build/`, `.dart_tool/`, `.apk`/`.aab`/`.ipa` continuam ignorados; pastas de plataforma `android/`/`ios/`/`web/` permanecem versionadas. |

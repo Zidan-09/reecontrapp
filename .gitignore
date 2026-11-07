@@ -35,6 +35,19 @@ migrate_working_dir/
 
 # Firebase private credentials (never versioned - see docs/architecture/DATABASE.md section 5.2)
 **/service-account*.json
+*.jks
+*.keystore
+key.properties
+
+# Local environment file (the public keys are versioned in .env.example)
+.env
+.env.*
+!.env.example
+
+# Build artifacts (assignment PDF section 8.1 - see CARD-034)
+*.apk
+*.aab
+*.ipa
 
 # Symbolication related
 app.*.symbols

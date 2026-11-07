@@ -69,7 +69,7 @@ As decisões antes pendentes foram aprovadas pela equipe e estão registradas em
 | Esquema físico de persistência | Documentos conforme `DATABASE.md` |
 | Regras definitivas de acesso remoto | `allow read, create: if true; allow update, delete: if false` |
 | Estratégia definitiva de timestamp | `FieldValue.serverTimestamp()` em `created_at` |
-| Credenciais e parâmetros de configuração | Ponto único em `lib/firebase_options.dart`; identificadores públicos versionados |
+| Credenciais e parâmetros de configuração | Ponto único em `lib/firebase_options.dart`; identificadores públicos em `.env.example` versionado, sem chave hardcoded no Dart |
 
 ### 4.1 Restrições
 

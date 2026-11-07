@@ -88,7 +88,7 @@ As decisões anteriormente pendentes foram aprovadas pela equipe e estão regist
 | Esquema físico de persistência | Conforme `DATABASE.md` |
 | Regras definitivas de acesso remoto | `allow read, create: if true; allow update, delete: if false` |
 | Estratégia definitiva de timestamp | `FieldValue.serverTimestamp()` em `created_at` |
-| Credenciais e parâmetros de configuração | Ponto único em `lib/firebase_options.dart` |
+| Credenciais e parâmetros de configuração | Ponto único em `lib/firebase_options.dart`; chaves públicas em `.env.example`, injetadas via `--dart-define-from-file=.env` |
 
 ### 5.1 Não presumir decisões não tomadas
 

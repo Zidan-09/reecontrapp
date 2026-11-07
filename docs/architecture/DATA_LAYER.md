@@ -547,7 +547,7 @@ As decisões de infraestrutura foram aprovadas no CARD-002 e estão detalhadas e
 | Estrutura física da coleção | Conforme o esquema de `DATABASE.md` |
 | Regras de acesso remoto | `allow read, create: if true; allow update, delete: if false` |
 | Geração definitiva do timestamp | `FieldValue.serverTimestamp()` em `created_at` |
-| Estratégia de configuração para avaliação | Parâmetros em `lib/firebase_options.dart` e arquivos de plataforma versionados; instruções no `README.md` (CARD-033) |
+| Estratégia de configuração para avaliação | Parâmetros em `lib/firebase_options.dart` (chaves via `.env`, modelo em `.env.example`) e arquivos de plataforma versionados; instruções no `README.md` (CARD-033) |
 
 A escolha atende aos requisitos acadêmicos de gratuidade, persistência, compartilhamento entre instalações e acesso sem autenticação.
 
