@@ -177,28 +177,35 @@ class _ItemFormState extends ConsumerState<ItemForm> {
               const SizedBox(height: 8),
               IgnorePointer(
                 ignoring: fieldsLocked,
-                child: SegmentedButton<ItemStatus>(
-                  segments: const [
-                    ButtonSegment(
-                      value: ItemStatus.lost,
-                      label: Text('Perdido'),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Perdido'),
+                      selected: _status == ItemStatus.lost,
+                      onSelected: fieldsLocked
+                          ? null
+                          : (_) {
+                              setState(() {
+                                _status = ItemStatus.lost;
+                                _statusError = null;
+                              });
+                            },
                     ),
-                    ButtonSegment(
-                      value: ItemStatus.found,
-                      label: Text('Encontrado'),
+                    ChoiceChip(
+                      label: const Text('Encontrado'),
+                      selected: _status == ItemStatus.found,
+                      onSelected: fieldsLocked
+                          ? null
+                          : (_) {
+                              setState(() {
+                                _status = ItemStatus.found;
+                                _statusError = null;
+                              });
+                            },
                     ),
                   ],
-                  selected: _status == null ? const {} : {_status!},
-                  onSelectionChanged: (Set<ItemStatus> selected) {
-                    if (fieldsLocked) {
-                      return;
-                    }
-                    setState(() {
-                      _status = selected.first;
-                      _statusError = null;
-                    });
-                  },
-                  emptySelectionAllowed: true,
                 ),
               ),
               if (_statusError != null) ...[
