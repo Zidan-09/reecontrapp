@@ -90,14 +90,17 @@ class ItemListPage extends ConsumerWidget {
       body: itemsAsync.when(
         skipLoadingOnReload: true,
         skipLoadingOnRefresh: true,
-        loading: () => const Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Carregando registros...'),
-            ],
+        loading: () => const _CenteredScrollable(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Carregando registros...', textAlign: TextAlign.center),
+              ],
+            ),
           ),
         ),
         error: (error, stackTrace) {
@@ -105,7 +108,7 @@ class ItemListPage extends ConsumerWidget {
               ? error.userMessage
               : 'Não foi possível concluir a operação. Tente novamente.';
 
-          return Center(
+          return _CenteredScrollable(
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -172,6 +175,31 @@ class ItemListPage extends ConsumerWidget {
         icon: const Icon(Icons.add),
         label: const Text('Cadastrar objeto'),
       ),
+    );
+  }
+}
+
+/// Centers [child] while keeping room to scroll on short viewports.
+///
+/// CARD-029: loading and error states must stay reachable in landscape
+/// or with enlarged text, without layout overflow. Fills at least the
+/// available height and scrolls when the content does not fit.
+class _CenteredScrollable extends StatelessWidget {
+  const _CenteredScrollable({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(child: child),
+          ),
+        );
+      },
     );
   }
 }
