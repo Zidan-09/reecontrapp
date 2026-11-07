@@ -71,7 +71,11 @@ class ItemListPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Objetos perdidos e encontrados'),
+        title: const Text(
+          'Objetos perdidos e encontrados',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
