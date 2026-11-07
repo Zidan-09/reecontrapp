@@ -331,7 +331,8 @@ Não criar diretórios adicionais ou classes genéricas sem necessidade.
 data/
 ├── data_sources/
 ├── models/
-└── repositories/
+├── repositories/
+└── data_providers.dart
 ```
 
 Contém a implementação do acesso aos dados.
@@ -364,6 +365,8 @@ models/
 
 `LostFoundItemModel` será responsável pelas conversões entre o formato de persistência e as entidades de domínio.
 
+Por pertencer à camada Data, este Model pode conhecer os tipos do SDK de nuvem (`Timestamp`, `FieldValue`), conforme `DATA_LAYER.md 6.1`. A entidade `LostFoundItem` do Domain permanece sem dependência de tecnologias externas.
+
 #### `repositories/`
 
 Contém implementações concretas dos contratos definidos no Domain.
@@ -376,6 +379,26 @@ repositories/
 ```
 
 `LostFoundRepositoryImpl` implementará `LostFoundRepository`, utilizando o Data Source e realizando as conversões necessárias.
+
+#### `data_providers.dart`
+
+Arquivo de composição de dependências da camada Data, aprovado em `DATA_LAYER.md 11` e `DESIGN_PATTERNS.md 5.2`.
+
+```text
+data/
+└── data_providers.dart
+```
+
+Responsabilidades:
+
+| Provider | Responsabilidade |
+|---|---|
+| `firestoreProvider` | Isolar a configuração do cliente do serviço de nuvem em um ponto único |
+| `lostFoundRemoteDataSourceProvider` | Instanciar o Data Source com o cliente acima |
+| `lostFoundRepositoryProvider` | Expor `LostFoundRepository` como contrato do Domain |
+| `getLostFoundItemsProvider` / `createLostFoundItemProvider` | Compor os casos de uso com o repositório |
+
+O fluxo segue exatamente a composição prevista: `RemoteDataSource → Repository → UseCase → Presentation Provider`. Nenhum widget instancia implementações concretas, e nenhum outro contêiner de injeção de dependências é utilizado.
 
 ### 8.4 `presentation/`
 

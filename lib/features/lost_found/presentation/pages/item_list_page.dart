@@ -108,9 +108,7 @@ class ItemListPage extends ConsumerWidget {
           ),
         ),
         error: (error, stackTrace) {
-          final message = error is CommunicationFailure
-              ? error.userMessage
-              : 'Não foi possível concluir a operação. Tente novamente.';
+          final message = toCommunicationFailure(error).userMessage;
 
           return _CenteredScrollable(
             child: Padding(

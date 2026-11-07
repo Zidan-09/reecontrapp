@@ -125,9 +125,9 @@ class _ItemFormState extends ConsumerState<ItemForm> {
         ref.read(createItemProvider.notifier).pendingItem != null;
     final fieldsLocked = isSubmitting || hasPendingOperation;
     final error = submission.error;
-    final errorMessage = error is CommunicationFailure
-        ? error.userMessage
-        : const CommunicationFailure.unknown().userMessage;
+    final errorMessage = error == null
+        ? const CommunicationFailure.unknown().userMessage
+        : toCommunicationFailure(error).userMessage;
 
     return PopScope(
       canPop: !isSubmitting,
