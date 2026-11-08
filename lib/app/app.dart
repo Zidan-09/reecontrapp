@@ -19,7 +19,7 @@ class ReencontrappApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      initialRoute: AppRouter.itemList,
+      initialRoute: AppRouter.welcome,
       onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
