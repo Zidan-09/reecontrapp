@@ -8,6 +8,9 @@ import 'package:reecontrapp/core/errors/communication_failure.dart';
 import '../providers/item_list_provider.dart';
 import '../widgets/lost_found_item_card.dart';
 
+/// Flat light-gray background matching `docs/design/card-design-idea.jpg`.
+const _listBackground = Color(0xFFF0F0F0);
+
 /// Listing screen (CARD-019, CARD-021, CARD-022).
 ///
 /// Consumes the listing state from CARD-015 through [itemListProvider]
@@ -71,18 +74,19 @@ class ItemListPage extends ConsumerWidget {
     }
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          'Achados e perdidos',
+          'Achados e Perdidos',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        foregroundColor: Colors.white,
-        backgroundColor: Colors.transparent,
+        centerTitle: true,
+        foregroundColor: Colors.black,
+        backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        systemOverlayStyle: SystemUiOverlayStyle.light,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -98,13 +102,8 @@ class ItemListPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('public/background.jpg'),
-            fit: BoxFit.cover,
-          ),
-        ),
+      body: ColoredBox(
+        color: _listBackground,
         child: SafeArea(
           bottom: false,
           child: itemsAsync.when(
@@ -126,26 +125,34 @@ class ItemListPage extends ConsumerWidget {
 
               return Column(
                 children: [
-                  if (isUpdating)
-                    const LinearProgressIndicator(
-                      backgroundColor: Colors.white24,
-                    ),
-                  _ListHeader(count: items.length),
+                  if (isUpdating) const LinearProgressIndicator(),
+                  ColoredBox(
+                    color: Colors.white,
+                    child: _ListHeader(count: items.length),
+                  ),
                   Expanded(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 560),
-                        child: RefreshIndicator(
-                          onRefresh: handleRefresh,
-                          child: ListView.separated(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
-                            itemCount: items.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              return LostFoundItemCard(item: items[index]);
-                            },
+                    child: ColoredBox(
+                      color: _listBackground,
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 560),
+                          child: RefreshIndicator(
+                            onRefresh: handleRefresh,
+                            child: ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                12,
+                                16,
+                                96,
+                              ),
+                              itemCount: items.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                return LostFoundItemCard(item: items[index]);
+                              },
+                            ),
                           ),
                         ),
                       ),
@@ -195,29 +202,15 @@ class _ListHeader extends StatelessWidget {
                     Text(
                       countLabel,
                       style: textTheme.titleSmall?.copyWith(
-                        color: Colors.white,
+                        color: Colors.black,
                         fontWeight: FontWeight.w600,
-                        shadows: const [
-                          Shadow(
-                            offset: Offset(0, 1),
-                            blurRadius: 6,
-                            color: Color(0x66000000),
-                          ),
-                        ],
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Mais recentes primeiro',
                       style: textTheme.bodySmall?.copyWith(
-                        color: Colors.white70,
-                        shadows: const [
-                          Shadow(
-                            offset: Offset(0, 1),
-                            blurRadius: 6,
-                            color: Color(0x66000000),
-                          ),
-                        ],
+                        color: Colors.black54,
                       ),
                     ),
                   ],
@@ -273,14 +266,14 @@ class _SkeletonCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.zero,
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
+        border: Border.all(color: const Color(0xFFE4E4E4)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x2E0B2E5F),
-            blurRadius: 20,
-            offset: Offset(0, 10),
+            color: Color(0x1A000000),
+            blurRadius: 16,
+            offset: Offset(0, 6),
           ),
         ],
       ),
@@ -309,7 +302,6 @@ class _SkeletonCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  flex: 3,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -321,7 +313,6 @@ class _SkeletonCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  flex: 2,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [

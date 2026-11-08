@@ -3,12 +3,9 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/lost_found_item.dart';
 import '../../domain/enums/item_status.dart';
 
-/// Deep navy sampled from the listing background (`public/background.jpg`).
-///
-/// Used only for the card drop shadow so the elevation reads as part of the
-/// same scene: the background light comes from the top, hence a soft
-/// downward shadow. Kept at ~18% opacity so depth never becomes a smudge.
-const _navyShadow = Color(0x2E0B2E5F);
+/// Neutral shadow for the white card over the flat `#F0F0F0` background,
+/// matching `docs/design/card-design-idea.jpg`.
+const _cardShadow = Color(0x1A000000);
 
 /// Solid green for the "ENCONTRADO" badge.
 ///
@@ -17,22 +14,45 @@ const _navyShadow = Color(0x2E0B2E5F);
 /// to keep lost/found distinguishable by label, dot and hue.
 const _foundBadge = Color(0xFF2E7D32);
 
+/// Lines of description visible while the card is collapsed.
+///
+/// Bounds the card height so long descriptions end with "..." instead of
+/// stretching the card. Tapping "MAIS DETALHES" removes the limit.
+const _collapsedDescriptionLines = 2;
+
 /// Card of a single object in the listing.
 ///
 /// Follows `docs/design/card-design-idea.jpg` without the object photo
-/// (image upload is out of scope) and without the contact/details buttons
-/// (no approved route or behavior yet): status row with a solid pill,
-/// bold title, two-column local/date block and a labeled description.
-class LostFoundItemCard extends StatelessWidget {
+/// (image upload is out of scope) and without the contact button (no
+/// approved behavior yet): status row with a solid pill, bold title,
+/// two-column local/date block, labeled description and the outlined
+/// "MAIS DETALHES" button.
+///
+/// The expand/collapse state is purely visual and stays local to the card
+/// ([State]), so no Riverpod state is involved.
+class LostFoundItemCard extends StatefulWidget {
   const LostFoundItemCard({super.key, required this.item});
 
   final LostFoundItem item;
 
   @override
+  State<LostFoundItemCard> createState() => _LostFoundItemCardState();
+}
+
+class _LostFoundItemCardState extends State<LostFoundItemCard> {
+  bool _expanded = false;
+
+  void _toggleExpanded() {
+    setState(() {
+      _expanded = !_expanded;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final isLost = item.status == ItemStatus.lost;
+    final isLost = widget.item.status == ItemStatus.lost;
 
     final badgeColor = isLost ? colorScheme.error : _foundBadge;
 
@@ -40,11 +60,11 @@ class LostFoundItemCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
+        border: Border.all(color: const Color(0xFFE4E4E4)),
         boxShadow: const [
-          BoxShadow(color: _navyShadow, blurRadius: 20, offset: Offset(0, 10)),
+          BoxShadow(color: _cardShadow, blurRadius: 16, offset: Offset(0, 6)),
         ],
       ),
       child: Padding(
@@ -67,7 +87,7 @@ class LostFoundItemCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              item.name,
+              widget.item.name,
               softWrap: true,
               style: textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
@@ -78,20 +98,18 @@ class LostFoundItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  flex: 3,
                   child: _InfoColumn(
                     icon: Icons.place_outlined,
                     label: 'Local',
-                    value: item.location,
+                    value: widget.item.location,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  flex: 2,
                   child: _InfoColumn(
                     icon: Icons.calendar_today_outlined,
                     label: 'Data',
-                    value: _formatDate(item.createdAt),
+                    value: _formatDate(widget.item.createdAt),
                     alignEnd: true,
                   ),
                 ),
@@ -105,16 +123,102 @@ class LostFoundItemCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              item.description,
-              softWrap: true,
-              style: textTheme.bodyMedium?.copyWith(height: 1.5),
+            _DescriptionSection(
+              description: widget.item.description,
+              expanded: _expanded,
+              onToggle: _toggleExpanded,
             ),
           ],
         ),
       ),
     );
   }
+}
+
+/// Description text clamped to [_collapsedDescriptionLines] with a
+/// full-width outlined toggle, mirroring the design mock.
+///
+/// The button only appears when the text actually overflows the collapsed
+/// limit (measured with [TextPainter] in the available width), so short
+/// descriptions keep the card compact. While collapsed the text ends with
+/// "..."; expanded it shows in full and the button reads "MENOS DETALHES".
+class _DescriptionSection extends StatelessWidget {
+  const _DescriptionSection({
+    required this.description,
+    required this.expanded,
+    required this.onToggle,
+  });
+
+  final String description;
+  final bool expanded;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final style = textTheme.bodyMedium?.copyWith(height: 1.5);
+        final isOverflowing = _exceedsMaxLines(
+          context,
+          text: description,
+          style: style,
+          maxWidth: constraints.maxWidth,
+        );
+        final showToggle = isOverflowing || expanded;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              description,
+              softWrap: true,
+              maxLines: expanded ? null : _collapsedDescriptionLines,
+              overflow: expanded ? null : TextOverflow.ellipsis,
+              style: style,
+            ),
+            if (showToggle) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: onToggle,
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(expanded ? 'MENOS DETALHES' : 'MAIS DETALHES'),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Returns true when [text] needs more than [_collapsedDescriptionLines]
+/// in the given width, honoring the current text scale.
+bool _exceedsMaxLines(
+  BuildContext context, {
+  required String text,
+  required TextStyle? style,
+  required double maxWidth,
+}) {
+  if (maxWidth <= 0) {
+    return false;
+  }
+  final painter = TextPainter(
+    text: TextSpan(text: text, style: style),
+    maxLines: _collapsedDescriptionLines,
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+  )..layout(maxWidth: maxWidth);
+  return painter.didExceedMaxLines;
 }
 
 /// Solid pill with a white dot and an uppercase Portuguese label.
@@ -132,7 +236,7 @@ class _StatusBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -221,7 +325,27 @@ class _InfoColumn extends StatelessWidget {
   }
 }
 
-/// Formats [date] as dd/MM/yyyy in local time.
+/// Portuguese month names for the card date, matching
+/// `docs/design/card-design-idea.jpg` ("25 de Outubro, 2023").
+///
+/// Kept as a local list on purpose: the project has no date-formatting
+/// dependency and a single usage does not justify adding one.
+const _monthNames = <String>[
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+];
+
+/// Formats [date] as "25 de Outubro, 2023" in local time.
 ///
 /// Returns 'Não informada' for [LostFoundItem.unknownCreatedAt] so legacy
 /// records and pending server timestamps keep the two-column alignment
@@ -231,7 +355,6 @@ String _formatDate(DateTime date) {
     return 'Não informada';
   }
   final local = date.toLocal();
-  final day = local.day.toString().padLeft(2, '0');
-  final month = local.month.toString().padLeft(2, '0');
-  return '$day/$month/${local.year}';
+  final month = _monthNames[local.month - 1];
+  return '${local.day} de $month, ${local.year}';
 }
