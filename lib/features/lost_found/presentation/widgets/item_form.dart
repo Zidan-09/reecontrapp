@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/app_theme.dart';
 import '../../../../core/errors/communication_failure.dart';
 import '../../domain/entities/lost_found_item.dart';
 import '../../domain/enums/item_status.dart';
@@ -128,82 +129,56 @@ class _ItemFormState extends ConsumerState<ItemForm> {
     final errorMessage = error == null
         ? const CommunicationFailure.unknown().userMessage
         : toCommunicationFailure(error).userMessage;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
 
     return PopScope(
       canPop: !isSubmitting,
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
-                controller: _nameController,
-                enabled: !fieldsLocked,
-                decoration: const InputDecoration(
-                  labelText: 'Nome do objeto',
-                  border: OutlineInputBorder(),
-                ),
-                textInputAction: TextInputAction.next,
-                validator: _validateName,
+              // ── Situação ──────────────────────────────────
+              Text(
+                'Situação do objeto',
+                style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant),
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                enabled: !fieldsLocked,
-                decoration: const InputDecoration(
-                  labelText: 'Descrição',
-                  border: OutlineInputBorder(),
-                ),
-                minLines: 3,
-                maxLines: 4,
-                textInputAction: TextInputAction.next,
-                validator: _validateDescription,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _locationController,
-                enabled: !fieldsLocked,
-                decoration: const InputDecoration(
-                  labelText: 'Local',
-                  border: OutlineInputBorder(),
-                ),
-                textInputAction: TextInputAction.next,
-                validator: _validateLocation,
-              ),
-              const SizedBox(height: 24),
-              Text('Situação', style: Theme.of(context).textTheme.titleSmall),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               IgnorePointer(
                 ignoring: fieldsLocked,
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                child: Row(
                   children: [
-                    ChoiceChip(
-                      label: const Text('Perdido'),
-                      selected: _status == ItemStatus.lost,
-                      onSelected: fieldsLocked
-                          ? null
-                          : (_) {
-                              setState(() {
-                                _status = ItemStatus.lost;
-                                _statusError = null;
-                              });
-                            },
+                    Expanded(
+                      child: _StatusCard(
+                        icon: Icons.search_rounded,
+                        label: 'Perdi algo',
+                        sublabel: 'O objeto sumiu',
+                        selected: _status == ItemStatus.lost,
+                        selectedColor: AppTheme.lost,
+                        selectedBg: AppTheme.lostBg(context),
+                        onTap: () => setState(() {
+                          _status = ItemStatus.lost;
+                          _statusError = null;
+                        }),
+                      ),
                     ),
-                    ChoiceChip(
-                      label: const Text('Encontrado'),
-                      selected: _status == ItemStatus.found,
-                      onSelected: fieldsLocked
-                          ? null
-                          : (_) {
-                              setState(() {
-                                _status = ItemStatus.found;
-                                _statusError = null;
-                              });
-                            },
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _StatusCard(
+                        icon: Icons.front_hand_rounded,
+                        label: 'Encontrei algo',
+                        sublabel: 'Achei um objeto',
+                        selected: _status == ItemStatus.found,
+                        selectedColor: AppTheme.found,
+                        selectedBg: AppTheme.foundBg(context),
+                        onTap: () => setState(() {
+                          _status = ItemStatus.found;
+                          _statusError = null;
+                        }),
+                      ),
                     ),
                   ],
                 ),
@@ -212,32 +187,128 @@ class _ItemFormState extends ConsumerState<ItemForm> {
                 const SizedBox(height: 8),
                 Text(
                   _statusError!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: cs.error, fontSize: 12),
                 ),
               ],
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+
+              // ── Campos ────────────────────────────────────
+              _FieldLabel('Nome do objeto'),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _nameController,
+                enabled: !fieldsLocked,
+                decoration: const InputDecoration(
+                  hintText: 'Ex: Garrafa, Mochila, Carteira…',
+                  prefixIcon: Icon(Icons.label_outline_rounded),
+                ),
+                textInputAction: TextInputAction.next,
+                validator: _validateName,
+              ),
+              const SizedBox(height: 16),
+
+              _FieldLabel('Local'),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _locationController,
+                enabled: !fieldsLocked,
+                decoration: const InputDecoration(
+                  hintText: 'Ex: Sala 204, Biblioteca…',
+                  prefixIcon: Icon(Icons.location_on_outlined),
+                ),
+                textInputAction: TextInputAction.next,
+                validator: _validateLocation,
+              ),
+              const SizedBox(height: 16),
+
+              _FieldLabel('Descrição'),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _descriptionController,
+                enabled: !fieldsLocked,
+                decoration: const InputDecoration(
+                  hintText: 'Detalhes que ajudem a identificar…',
+                  prefixIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 48),
+                    child: Icon(Icons.notes_rounded),
+                  ),
+                  alignLabelWithHint: true,
+                ),
+                minLines: 3,
+                maxLines: 4,
+                textInputAction: TextInputAction.done,
+                validator: _validateDescription,
+              ),
+              const SizedBox(height: 28),
+
+              // ── Avisos ────────────────────────────────────
               if (hasPendingOperation && !isSubmitting) ...[
-                const Text(
-                  'Seus dados foram preservados. Tente novamente para concluir '
-                  'este cadastro antes de iniciar outro.',
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: cs.secondaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        size: 16,
+                        color: cs.onSecondaryContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Seus dados foram preservados. '
+                          'Tente novamente para concluir '
+                          'este cadastro antes de iniciar outro.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: cs.onSecondaryContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
               ],
               if (submission.hasError && !isSubmitting) ...[
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    errorMessage,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: cs.errorContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Semantics(
+                    liveRegion: true,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          size: 16,
+                          color: cs.onErrorContainer,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            errorMessage,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: cs.onErrorContainer,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
               ],
+
+              // ── Botão ─────────────────────────────────────
               FilledButton(
                 onPressed: isSubmitting ? null : _handleSave,
                 child: isSubmitting
@@ -248,16 +319,154 @@ class _ItemFormState extends ConsumerState<ItemForm> {
                           SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           ),
                           SizedBox(width: 12),
                           Text('Salvando...'),
                         ],
                       )
-                    : Text(hasPendingOperation ? 'Tentar novamente' : 'Salvar'),
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            hasPendingOperation
+                                ? Icons.refresh_rounded
+                                : Icons.send_rounded,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            hasPendingOperation
+                                ? 'Tentar novamente'
+                                : 'Registrar objeto',
+                          ),
+                        ],
+                      ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Os dados ficam visíveis para todos os usuários.',
+                textAlign: TextAlign.center,
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.labelLarge
+          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+    );
+  }
+}
+
+class _StatusCard extends StatelessWidget {
+  const _StatusCard({
+    required this.icon,
+    required this.label,
+    required this.sublabel,
+    required this.selected,
+    required this.selectedColor,
+    required this.selectedBg,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final String sublabel;
+  final bool selected;
+  final Color selectedColor;
+  final Color selectedBg;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selected ? selectedBg : cs.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? selectedColor : cs.outlineVariant,
+            width: selected ? 1.5 : 0.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: selected ? selectedColor : selectedBg,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: selected ? Colors.white : selectedColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: selected ? selectedColor : cs.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              sublabel,
+              style: TextStyle(
+                fontSize: 11,
+                color: selected
+                    ? selectedColor.withValues(alpha: 0.75)
+                    : cs.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 18,
+              child: AnimatedOpacity(
+                opacity: selected ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 180),
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: selectedColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    size: 11,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
