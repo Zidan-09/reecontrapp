@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Obrigatório no release: sem esta permissão o Firestore fica sem rede
+         no Android (o manifest de debug já a concede, por isso o debug funciona). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="reecontrapp"
         android:name="${applicationName}"
