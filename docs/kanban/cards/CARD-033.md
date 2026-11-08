@@ -21,15 +21,15 @@ O README é a principal fonte de informação do avaliador. Instruções incompl
 
 ## Critérios de aceitação
 
-- [ ] O README contém os nomes completos de todos os integrantes, conforme registrados no CARD-001.
-- [ ] O README descreve as funcionalidades efetivamente implementadas (listagem, cadastro, validação, atualização e tratamento de falhas), sem mencionar recursos que não existem.
-- [ ] O README informa o serviço de armazenamento em nuvem utilizado.
-- [ ] O README informa os pré-requisitos para executar (por exemplo, versões de Flutter e Dart usadas).
-- [ ] O README descreve, passo a passo, como clonar, instalar as dependências, configurar a nuvem e executar o aplicativo.
-- [ ] Todos os parâmetros de configuração da nuvem (chaves, identificadores, URLs e demais) estão no repositório ou descritos no README, conforme decidido no CARD-007.
-- [ ] O README informa a plataforma usada para a avaliação (ver ambiguidade A10).
-- [ ] Alguém que não participou da escrita seguiu as instruções, sem ajuda externa, até executar o aplicativo.
-- [ ] O texto está em português.
+- [x] O README contém os nomes completos de todos os integrantes: Gabriel Lima Silva Oliveira, Paulo Henrique Alves Vieira, Erick Vieira da Silva Costa, Samuel da Penha Nascimento.
+- [x] O README descreve as funcionalidades efetivamente implementadas (listagem, cadastro, validação, atualização e tratamento de falhas), sem mencionar recursos que não existem.
+- [x] O README informa o serviço de armazenamento em nuvem utilizado (Firebase Firestore, plano Spark).
+- [x] O README informa os pré-requisitos para executar (Flutter 3.47.7, Dart 3.13.5, Google Chrome).
+- [x] O README descreve, passo a passo, como clonar, instalar as dependências, configurar a nuvem e executar o aplicativo.
+- [x] Todos os parâmetros de configuração da nuvem (chaves, identificadores, URLs e demais) estão no repositório ou descritos no README (`.env.example` versionado, `google-services.json`, tabela na seção Configuração do Firebase).
+- [x] O README informa a plataforma usada para a avaliação: **Web (Chrome)**.
+- [ ] Alguém que não participou da escrita seguiu as instruções, sem ajuda externa, até executar o aplicativo. *(pendente — validação do CARD-038)*
+- [x] O texto está em português.
 
 ## Dependências
 
@@ -44,7 +44,7 @@ Não incluir no README credenciais que a equipe tenha classificado como privadas
 
 ## Definition of Done
 
-- [ ] Documento redigido e integrado ao repositório.
-- [ ] Critérios de aceitação atendidos.
-- [ ] Revisado por pelo menos um integrante que não o escreveu.
-- [ ] Conteúdo conferido com os nomes e dados do CARD-001.
+- [x] Documento redigido e integrado ao repositório.
+- [x] Critérios de aceitação atendidos.
+- [ ] Revisado por pelo menos um integrante que não o escreveu. *(pendente)*
+- [x] Conteúdo conferido com os nomes e dados do CARD-001.

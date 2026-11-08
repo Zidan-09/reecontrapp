@@ -1,5 +1,5 @@
 name: reecontrapp
-description: "A new Flutter project."
+description: Aplicativo de achados e perdidos para a comunidade acadêmica. Permite cadastrar objetos perdidos ou encontrados e consultar os registros compartilhados em nuvem (Firebase Firestore).
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
