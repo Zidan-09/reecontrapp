@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Minimal welcome content shown above the main listing.
 ///
-/// Solid background, centered logo with preserved aspect ratio, app name
+/// Photo background with centered logo (proportions preserved), app name
 /// and a static hint with a softly animated `^` arrow. The hint animation
 /// owns its single [AnimationController] and loops while visible.
 ///
@@ -44,10 +44,26 @@ class _WelcomeViewState extends State<WelcomeView>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final textStyle = Theme.of(context).textTheme.headlineMedium?.copyWith(
+      color: Colors.white,
+      shadows: const [
+        Shadow(offset: Offset(0, 1), blurRadius: 6, color: Color(0x66000000)),
+      ],
+    );
+    final hintStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+      color: Colors.white,
+      shadows: const [
+        Shadow(offset: Offset(0, 1), blurRadius: 6, color: Color(0x66000000)),
+      ],
+    );
 
-    return ColoredBox(
-      color: colorScheme.primary,
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('public/background.jpg'),
+          fit: BoxFit.cover,
+        ),
+      ),
       child: SafeArea(
         child: Column(
           children: [
@@ -66,8 +82,7 @@ class _WelcomeViewState extends State<WelcomeView>
                     Text(
                       'Reencontrapp',
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(color: colorScheme.onPrimary),
+                      style: textStyle,
                     ),
                   ],
                 ),
@@ -81,18 +96,10 @@ class _WelcomeViewState extends State<WelcomeView>
                   child: child,
                 );
               },
-              child: Text(
-                '^',
-                style: Theme.of(context).textTheme.headlineMedium
-                    ?.copyWith(color: colorScheme.onPrimary),
-              ),
+              child: Text('^', style: textStyle),
             ),
             const SizedBox(height: 8),
-            Text(
-              'arraste para cima',
-              style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: colorScheme.onPrimary),
-            ),
+            Text('arraste para cima', style: hintStyle),
             const SizedBox(height: 32),
           ],
         ),
