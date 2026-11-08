@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:reecontrapp/app/app_router.dart';
@@ -18,12 +19,12 @@ import '../widgets/lost_found_item_card.dart';
 /// no data inline: every item comes from the provider.
 ///
 /// Loading and error with retry belong to CARD-021 and are handled
-/// here: the initial load shows a loading indicator, a read failure
-/// shows only the comprehensible message from CARD-014
-/// ([CommunicationFailure.userMessage], in Portuguese, without
-/// technical details) with a visible action to try again, and every
-/// retry goes back through loading before settling into data or a
-/// new error. The error view never shows a stale list.
+/// here: the initial load shows skeleton cards matching the final
+/// layout, a read failure shows only the comprehensible message from
+/// CARD-014 ([CommunicationFailure.userMessage], in Portuguese,
+/// without technical details) with a visible action to try again, and
+/// every retry goes back through loading before settling into data or
+/// a new error. The error view never shows a stale list.
 ///
 /// Manual refresh (CARD-022) re-reads the cloud through the same
 /// CARD-015 action (`ref.invalidate(itemListProvider)`), so records
@@ -70,12 +71,18 @@ class ItemListPage extends ConsumerWidget {
     }
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text(
-          'Objetos perdidos e encontrados',
+          'Achados e perdidos',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -91,91 +98,393 @@ class ItemListPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: itemsAsync.when(
-        skipLoadingOnReload: true,
-        skipLoadingOnRefresh: true,
-        loading: () => const _CenteredScrollable(
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Carregando registros...', textAlign: TextAlign.center),
-              ],
-            ),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('public/background.jpg'),
+            fit: BoxFit.cover,
           ),
         ),
-        error: (error, stackTrace) {
-          final message = toCommunicationFailure(error).userMessage;
+        child: SafeArea(
+          bottom: false,
+          child: itemsAsync.when(
+            skipLoadingOnReload: true,
+            skipLoadingOnRefresh: true,
+            loading: () => const _LoadingList(),
+            error: (error, stackTrace) {
+              final message = toCommunicationFailure(error).userMessage;
 
-          return _CenteredScrollable(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              return _ErrorView(
+                message: message,
+                onRetry: () => ref.invalidate(itemListProvider),
+              );
+            },
+            data: (items) {
+              if (items.isEmpty) {
+                return _EmptyView(onRefresh: handleRefresh);
+              }
+
+              return Column(
                 children: [
-                  const Icon(Icons.cloud_off_outlined, size: 48),
-                  const SizedBox(height: 16),
-                  Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton.icon(
-                    onPressed: () => ref.invalidate(itemListProvider),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Tentar novamente'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-        data: (items) {
-          if (items.isEmpty) {
-            return RefreshIndicator(
-              onRefresh: handleRefresh,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: [
-                  SizedBox(
-                    height: MediaQuery.sizeOf(context).height * 0.6,
-                    child: const Center(
-                      child: Text('Nenhum registro encontrado.'),
+                  if (isUpdating)
+                    const LinearProgressIndicator(
+                      backgroundColor: Colors.white24,
+                    ),
+                  _ListHeader(count: items.length),
+                  Expanded(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 720),
+                        child: RefreshIndicator(
+                          onRefresh: handleRefresh,
+                          child: ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                            itemCount: items.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              return LostFoundItemCard(item: items[index]);
+                            },
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
-              ),
-            );
-          }
-
-          return Column(
-            children: [
-              if (isUpdating) const LinearProgressIndicator(),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: handleRefresh,
-                  child: ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 88),
-                    itemCount: items.length,
-                    itemBuilder: (context, index) {
-                      return LostFoundItemCard(item: items[index]);
-                    },
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+              );
+            },
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.of(context).pushNamed(AppRouter.createItem),
         icon: const Icon(Icons.add),
         label: const Text('Cadastrar objeto'),
+      ),
+    );
+  }
+}
+
+/// Summary shown above the list: how many records exist and their order.
+///
+/// Both values come from the already loaded list, so no extra reads or
+/// filters are introduced. It answers "is this everything?" at a glance
+/// and sets the expectation that the newest records come first.
+class _ListHeader extends StatelessWidget {
+  const _ListHeader({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final countLabel = count == 1 ? '1 objeto' : '$count objetos';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      countLabel,
+                      style: textTheme.titleSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        shadows: const [
+                          Shadow(
+                            offset: Offset(0, 1),
+                            blurRadius: 6,
+                            color: Color(0x66000000),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Mais recentes primeiro',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: Colors.white70,
+                        shadows: const [
+                          Shadow(
+                            offset: Offset(0, 1),
+                            blurRadius: 6,
+                            color: Color(0x66000000),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Initial loading state as skeleton cards.
+///
+/// The placeholders mirror the shape of [LostFoundItemCard] (status pill,
+/// title, location and description lines) so the layout does not jump
+/// when the data arrives. Static blocks are used on purpose: no extra
+/// animation cost and no motion-sensitivity issues.
+class _LoadingList extends StatelessWidget {
+  const _LoadingList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 88, 16, 96),
+      itemCount: 5,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) => const _SkeletonCard(),
+    );
+  }
+}
+
+class _SkeletonCard extends StatelessWidget {
+  const _SkeletonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final placeholder = colorScheme.surfaceContainerHigh;
+
+    Widget bar({required double width, required double height}) {
+      return Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: placeholder,
+          borderRadius: BorderRadius.circular(999),
+        ),
+      );
+    }
+
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 110,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: placeholder,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                const Spacer(),
+                bar(width: 84, height: 12),
+              ],
+            ),
+            const SizedBox(height: 16),
+            bar(width: 180, height: 16),
+            const SizedBox(height: 12),
+            bar(width: 140, height: 12),
+            const SizedBox(height: 8),
+            bar(width: double.infinity, height: 12),
+            const SizedBox(height: 6),
+            bar(width: double.infinity, height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Empty state: teaches what belongs here and surfaces the existing
+/// registration action. The button navigates to the same route as the
+/// floating action button, so no new behavior is introduced.
+class _EmptyView extends StatelessWidget {
+  const _EmptyView({required this.onRefresh});
+
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 88, 24, 96),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.6),
+                        ),
+                        boxShadow: const [
+                          BoxShadow(
+                            blurRadius: 24,
+                            offset: Offset(0, 12),
+                            color: Color(0x33000000),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              color: colorScheme.secondaryContainer,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.search_outlined,
+                              size: 32,
+                              color: colorScheme.onSecondaryContainer,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Nenhum objeto por aqui ainda',
+                            textAlign: TextAlign.center,
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Quando alguém da comunidade cadastrar um objeto '
+                            'perdido ou encontrado, ele aparece nesta lista.',
+                            textAlign: TextAlign.center,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          FilledButton.icon(
+                            onPressed: () =>
+                                Navigator.of(context)
+                                    .pushNamed(AppRouter.createItem),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Cadastrar objeto'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Error state: shows only the user-facing CARD-014 message with a clear
+/// recovery action, keeping the same visual language as the empty state.
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return _CenteredScrollable(
+      topPadding: 88,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 96),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.6)),
+              boxShadow: const [
+                BoxShadow(
+                  blurRadius: 24,
+                  offset: Offset(0, 12),
+                  color: Color(0x33000000),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: colorScheme.errorContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.cloud_off_outlined,
+                    size: 32,
+                    color: colorScheme.onErrorContainer,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Não foi possível carregar a lista',
+                  textAlign: TextAlign.center,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Tentar novamente'),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -187,17 +496,24 @@ class ItemListPage extends ConsumerWidget {
 /// or with enlarged text, without layout overflow. Fills at least the
 /// available height and scrolls when the content does not fit.
 class _CenteredScrollable extends StatelessWidget {
-  const _CenteredScrollable({required this.child});
+  const _CenteredScrollable({required this.child, this.topPadding = 0});
 
   final Widget child;
+  final double topPadding;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
+          padding: EdgeInsets.only(top: topPadding),
           child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            constraints: BoxConstraints(
+              minHeight: (constraints.maxHeight - topPadding).clamp(
+                0.0,
+                double.infinity,
+              ),
+            ),
             child: Center(child: child),
           ),
         );
