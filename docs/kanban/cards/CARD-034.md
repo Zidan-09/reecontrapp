@@ -86,6 +86,17 @@ A chave de API do cliente estava hardcoded em `lib/firebase_options.dart` (Web e
 | `flutter pub get` | `Got dependencies!` |
 | `dart format .` | `Formatted 24 files (0 changed)` |
 | `flutter analyze` | `No issues found!` |
-| `flutter build web --dart-define-from-file=.env` | `✓ Built build\web` (38,8 s); a chave está presente no bundle gerado; `build/` ignorado pelo `.gitignore` |
+| `flutter build web --dart-define-from-file=.env` | `✓ Built build\web`; chave presente no bundle |
+| `flutter build web` (sem flag) | `✓ Built build\web`; chave **ausente** do bundle (`apiKey: ""`) |
+
+### Teste C — comportamento sem `--dart-define-from-file=.env` (08/11/2026)
+
+| Item | Resultado |
+|---|---|
+| Build sem flag | Sucesso, `apiKey: ""` no bundle |
+| Firestore REST API (sem chave) | HTTP 200 — leitura pública permitida pelas rules |
+| Firebase Web SDK com `apiKey: ""` | **Inconclusivo em automação headless** — o app inicializa sem crash, mas a carga assíncrona dos dados não pôde ser verificada sem interface gráfica. Requer validação manual no Chrome real. |
+
+> **Conclusão prática:** a leitura via REST funciona sem chave; o SDK Web pode tolerar `apiKey: ""` (visto que não há erro de inicialização). O README mantém o flag como comando oficial por segurança, mas o grupo deve testar `flutter run -d chrome` sem flag e reportar se a lista carrega. Se carregar, o flag passa a ser recomendação, não obrigação.
 
 Nenhum teste automatizado foi criado ou alterado neste card.
