@@ -8,7 +8,7 @@ import '../providers/create_item_provider.dart';
 
 /// Formulário de cadastro (CARD-024 a CARD-027).
 ///
-/// O botão "Salvar" valida todos os campos antes de enviar; com dados
+/// O botão valida todos os campos antes de enviar; com dados
 /// inválidos nenhuma gravação é disparada. Com dados válidos, chama
 /// `CreateItemNotifier.submit` uma única vez a partir do gesto do usuário
 /// (nunca a partir do `build`), que grava na nuvem via caso de uso.
@@ -23,7 +23,7 @@ import '../providers/create_item_provider.dart';
 /// - Após o sucesso, a tela retorna (`pop`) para a listagem, que é
 ///   recarregada da nuvem pela invalidação feita no notifier (CARD-028).
 ///   Em caso de falha, permanece no formulário com os dados preservados
-///   e a mensagem do CARD-014; o botão Salvar permite tentar novamente.
+///   e a mensagem do CARD-014; o botão principal permite tentar novamente.
 /// - O retorno fica bloqueado durante o envio. Após uma falha é possível
 ///   sair e reabrir o formulário: o provider conserva a operação em memória.
 /// - Após o primeiro envio os dados ficam bloqueados até o sucesso, evitando
@@ -42,6 +42,9 @@ class _ItemFormState extends ConsumerState<ItemForm> {
   final _locationController = TextEditingController();
   ItemStatus? _status;
   String? _statusError;
+
+  static const _maxNameLength = 60;
+  static const _maxDescriptionLength = 200;
 
   @override
   void initState() {
@@ -66,14 +69,18 @@ class _ItemFormState extends ConsumerState<ItemForm> {
   String? _validateName(String? value) {
     final text = (value ?? '').trim();
     if (text.isEmpty) return 'Informe o nome do objeto';
-    if (text.length > 60) return 'Nome deve ter até 60 caracteres';
+    if (text.length > _maxNameLength) {
+      return 'Nome deve ter até $_maxNameLength caracteres';
+    }
     return null;
   }
 
   String? _validateDescription(String? value) {
     final text = (value ?? '').trim();
     if (text.isEmpty) return 'Informe a descrição';
-    if (text.length > 200) return 'Descrição deve ter até 200 caracteres';
+    if (text.length > _maxDescriptionLength) {
+      return 'Descrição deve ter até $_maxDescriptionLength caracteres';
+    }
     return null;
   }
 
@@ -119,6 +126,8 @@ class _ItemFormState extends ConsumerState<ItemForm> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final submission = ref.watch(createItemProvider);
     final isSubmitting = submission.isLoading;
     final hasPendingOperation =
@@ -133,132 +142,356 @@ class _ItemFormState extends ConsumerState<ItemForm> {
       canPop: !isSubmitting,
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                enabled: !fieldsLocked,
-                decoration: const InputDecoration(
-                  labelText: 'Nome do objeto',
-                  border: OutlineInputBorder(),
-                ),
-                textInputAction: TextInputAction.next,
-                validator: _validateName,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                enabled: !fieldsLocked,
-                decoration: const InputDecoration(
-                  labelText: 'Descrição',
-                  border: OutlineInputBorder(),
-                ),
-                minLines: 3,
-                maxLines: 4,
-                textInputAction: TextInputAction.next,
-                validator: _validateDescription,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _locationController,
-                enabled: !fieldsLocked,
-                decoration: const InputDecoration(
-                  labelText: 'Local',
-                  border: OutlineInputBorder(),
-                ),
-                textInputAction: TextInputAction.next,
-                validator: _validateLocation,
-              ),
-              const SizedBox(height: 24),
-              Text('Situação', style: Theme.of(context).textTheme.titleSmall),
-              const SizedBox(height: 8),
-              IgnorePointer(
-                ignoring: fieldsLocked,
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Perdido'),
-                      selected: _status == ItemStatus.lost,
-                      onSelected: fieldsLocked
-                          ? null
-                          : (_) {
-                              setState(() {
-                                _status = ItemStatus.lost;
-                                _statusError = null;
-                              });
-                            },
-                    ),
-                    ChoiceChip(
-                      label: const Text('Encontrado'),
-                      selected: _status == ItemStatus.found,
-                      onSelected: fieldsLocked
-                          ? null
-                          : (_) {
-                              setState(() {
-                                _status = ItemStatus.found;
-                                _statusError = null;
-                              });
-                            },
-                    ),
-                  ],
-                ),
-              ),
-              if (_statusError != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  _statusError!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                    fontSize: 12,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _FormHeader(
+                    title: hasPendingOperation
+                        ? 'Conclua o cadastro pendente'
+                        : 'Descreva o objeto',
                   ),
-                ),
-              ],
-              const SizedBox(height: 32),
-              if (hasPendingOperation && !isSubmitting) ...[
-                const Text(
-                  'Seus dados foram preservados. Tente novamente para concluir '
-                  'este cadastro antes de iniciar outro.',
-                ),
-                const SizedBox(height: 16),
-              ],
-              if (submission.hasError && !isSubmitting) ...[
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    errorMessage,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFE4E4E4)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x1A000000),
+                          blurRadius: 16,
+                          offset: Offset(0, 6),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              FilledButton(
-                onPressed: isSubmitting ? null : _handleSave,
-                child: isSubmitting
-                    ? const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          SizedBox(
+                          Text(
+                            'Sobre o objeto',
+                            style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _nameController,
+                            enabled: !fieldsLocked,
+                            decoration: const InputDecoration(
+                              labelText: 'Nome do objeto',
+                              hintText: 'Ex.: Mochila preta',
+                              helperText: 'Até $_maxNameLength caracteres',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.label_outlined),
+                            ),
+                            maxLength: _maxNameLength,
+                            textInputAction: TextInputAction.next,
+                            textCapitalization: TextCapitalization.sentences,
+                            validator: _validateName,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _descriptionController,
+                            enabled: !fieldsLocked,
+                            decoration: const InputDecoration(
+                              labelText: 'Descrição',
+                              hintText:
+                                  'Ex.: Com adesivos, vista perto da cantina',
+                              helperText:
+                                  'Até $_maxDescriptionLength caracteres',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.description_outlined),
+                              alignLabelWithHint: true,
+                            ),
+                            minLines: 3,
+                            maxLines: 4,
+                            maxLength: _maxDescriptionLength,
+                            textInputAction: TextInputAction.next,
+                            textCapitalization: TextCapitalization.sentences,
+                            validator: _validateDescription,
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Onde e como',
+                            style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _locationController,
+                            enabled: !fieldsLocked,
+                            decoration: const InputDecoration(
+                              labelText: 'Local',
+                              hintText: 'Ex.: Biblioteca, bloco B',
+                              helperText:
+                                  'Onde o objeto foi perdido ou encontrado',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.place_outlined),
+                            ),
+                            textInputAction: TextInputAction.done,
+                            textCapitalization: TextCapitalization.sentences,
+                            validator: _validateLocation,
+                            onFieldSubmitted: (_) => _handleSave(),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Situação',
+                            style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Escolha uma das opções abaixo.',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          IgnorePointer(
+                            ignoring: fieldsLocked,
+                            child: SegmentedButton<ItemStatus>(
+                              emptySelectionAllowed: true,
+                              segments: const [
+                                ButtonSegment<ItemStatus>(
+                                  value: ItemStatus.lost,
+                                  label: Text('Perdido'),
+                                  icon: Icon(Icons.search_outlined),
+                                ),
+                                ButtonSegment<ItemStatus>(
+                                  value: ItemStatus.found,
+                                  label: Text('Encontrado'),
+                                  icon: Icon(Icons.check_circle_outlined),
+                                ),
+                              ],
+                              selected: _status == null
+                                  ? const <ItemStatus>{}
+                                  : {_status!},
+                              showSelectedIcon: false,
+                              onSelectionChanged: fieldsLocked
+                                  ? null
+                                  : (selection) {
+                                      setState(() {
+                                        _status = selection.first;
+                                        _statusError = null;
+                                      });
+                                    },
+                            ),
+                          ),
+                          if (_statusError != null) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.error_outlined,
+                                  size: 16,
+                                  color: colorScheme.error,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    _statusError!,
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.error,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (hasPendingOperation && !isSubmitting) ...[
+                            const SizedBox(height: 16),
+                            _InfoBanner(
+                              text:
+                                  'Seus dados foram preservados. Tente novamente '
+                                  'para concluir este cadastro antes de iniciar '
+                                  'outro.',
+                            ),
+                          ],
+                          if (submission.hasError && !isSubmitting) ...[
+                            const SizedBox(height: 16),
+                            Semantics(
+                              liveRegion: true,
+                              child: _ErrorBanner(message: errorMessage),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    onPressed: isSubmitting ? null : _handleSave,
+                    icon: isSubmitting
+                        ? const SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(
+                            hasPendingOperation
+                                ? Icons.refresh_outlined
+                                : Icons.check_outlined,
                           ),
-                          SizedBox(width: 12),
-                          Text('Salvando...'),
-                        ],
-                      )
-                    : Text(hasPendingOperation ? 'Tentar novamente' : 'Salvar'),
+                    label: Text(
+                      isSubmitting
+                          ? 'Salvando...'
+                          : hasPendingOperation
+                          ? 'Tentar novamente'
+                          : 'Cadastrar objeto',
+                    ),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                      textStyle: textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    isSubmitting
+                        ? 'Salvando na nuvem. Aguarde sem sair da tela.'
+                        : 'O registro aparece na lista assim que for salvo.',
+                    textAlign: TextAlign.center,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Título da tela com ícone.
+class _FormHeader extends StatelessWidget {
+  const _FormHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(
+            Icons.add_box_outlined,
+            color: colorScheme.onPrimaryContainer,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            title,
+            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Aviso neutro para a operação pendente conservada em memória.
+class _InfoBanner extends StatelessWidget {
+  const _InfoBanner({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outlined,
+            size: 20,
+            color: colorScheme.onSecondaryContainer,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSecondaryContainer,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Erro de envio com ícone e cor, sem detalhes técnicos.
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.cloud_off_outlined,
+            size: 20,
+            color: colorScheme.onErrorContainer,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onErrorContainer,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
