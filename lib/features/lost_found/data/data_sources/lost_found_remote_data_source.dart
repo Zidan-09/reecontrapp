@@ -8,10 +8,23 @@ class LostFoundRemoteDataSource {
   final FirebaseFirestore _db;
 
   Future<List<LostFoundItemModel>> getAll() async {
-    // GetOptions padrão usa cache-then-server: mostra o que já está em cache
+    // Leitura inicial usa cache-then-server: mostra o que já está em cache
     // e completa com o servidor. Sem timeout próprio para não abortar uma
     // leitura lenta porém válida (o SDK já trata offline).
     final snapshot = await _db.collection('items').get();
+
+    // Cache vazio não prova coleção vazia: numa instalação nova sem
+    // conexão, o `get()` resolve do cache vazio como lista vazia e a
+    // falha de comunicação seria mascarada como "Nenhum registro ainda"
+    // (RF03.4/RF03.5). Confirma no servidor nesse caso ambíguo; se a
+    // rede falhar, o erro vira CommunicationFailure e a tela exibe a
+    // mensagem em português com nova tentativa.
+    if (snapshot.metadata.isFromCache && snapshot.docs.isEmpty) {
+      final server = await _db
+          .collection('items')
+          .get(const GetOptions(source: Source.server));
+      return server.docs.map(LostFoundItemModel.fromFirestore).toList();
+    }
 
     return snapshot.docs.map(LostFoundItemModel.fromFirestore).toList();
   }
