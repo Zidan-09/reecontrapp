@@ -3,14 +3,26 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/lost_found_item.dart';
 import '../../domain/enums/item_status.dart';
 
+/// Deep navy sampled from the listing background (`public/background.jpg`).
+///
+/// Used only for the card drop shadow so the elevation reads as part of the
+/// same scene: the background light comes from the top, hence a soft
+/// downward shadow. Kept at ~18% opacity so depth never becomes a smudge.
+const _navyShadow = Color(0x2E0B2E5F);
+
+/// Solid green for the "ENCONTRADO" badge.
+///
+/// [ColorScheme.error] already covers "PERDIDO" with theme contrast, but no
+/// theme color maps cleanly to a solid "found" pill, so the value is fixed
+/// to keep lost/found distinguishable by label, dot and hue.
+const _foundBadge = Color(0xFF2E7D32);
+
 /// Card of a single object in the listing.
 ///
-/// Shows the name first, then where it was registered ([location]) and the
-/// full [description] with wrapping. The situation combines a tinted pill
-/// with an icon and a Portuguese label, plus a side stripe in the same
-/// status color, so lost and found items stay distinguishable without
-/// relying on color alone. The registration date is shown when known and
-/// hidden for legacy records carrying [LostFoundItem.unknownCreatedAt].
+/// Follows `docs/design/card-design-idea.jpg` without the object photo
+/// (image upload is out of scope) and without the contact/details buttons
+/// (no approved route or behavior yet): status row with a solid pill,
+/// bold title, two-column local/date block and a labeled description.
 class LostFoundItemCard extends StatelessWidget {
   const LostFoundItemCard({super.key, required this.item});
 
@@ -22,92 +34,81 @@ class LostFoundItemCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final isLost = item.status == ItemStatus.lost;
 
-    final badgeColor = isLost
-        ? colorScheme.errorContainer
-        : colorScheme.tertiaryContainer;
-    final onBadgeColor = isLost
-        ? colorScheme.onErrorContainer
-        : colorScheme.onTertiaryContainer;
-    final stripeColor = isLost ? colorScheme.error : colorScheme.tertiary;
-    final dateLabel = _formatDate(item.createdAt);
+    final badgeColor = isLost ? colorScheme.error : _foundBadge;
 
-    return Card(
-      elevation: 0,
+    return Container(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colorScheme.outlineVariant),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
+        boxShadow: const [
+          BoxShadow(color: _navyShadow, blurRadius: 20, offset: Offset(0, 10)),
+        ],
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 4, color: stripeColor),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: _StatusBadge(
-                            isLost: isLost,
-                            backgroundColor: badgeColor,
-                            foregroundColor: onBadgeColor,
-                          ),
-                        ),
-                        if (dateLabel != null) ...[
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Align(
-                              alignment: Alignment.centerRight,
-                              child: _DateLabel(label: dateLabel),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      item.name,
-                      softWrap: true,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.place_outlined,
-                          size: 16,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            item.location,
-                            softWrap: true,
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      item.description,
-                      softWrap: true,
-                      style: textTheme.bodyMedium?.copyWith(height: 1.5),
-                    ),
-                  ],
+            Row(
+              children: [
+                Text(
+                  'Status',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
+                const Spacer(),
+                _StatusBadge(isLost: isLost, backgroundColor: badgeColor),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              item.name,
+              softWrap: true,
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: _InfoColumn(
+                    icon: Icons.place_outlined,
+                    label: 'Local',
+                    value: item.location,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: _InfoColumn(
+                    icon: Icons.calendar_today_outlined,
+                    label: 'Data',
+                    value: _formatDate(item.createdAt),
+                    alignEnd: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Descrição',
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              item.description,
+              softWrap: true,
+              style: textTheme.bodyMedium?.copyWith(height: 1.5),
             ),
           ],
         ),
@@ -116,17 +117,12 @@ class LostFoundItemCard extends StatelessWidget {
   }
 }
 
-/// Compact pill combining icon and Portuguese label for the item status.
+/// Solid pill with a white dot and an uppercase Portuguese label.
 class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({
-    required this.isLost,
-    required this.backgroundColor,
-    required this.foregroundColor,
-  });
+  const _StatusBadge({required this.isLost, required this.backgroundColor});
 
   final bool isLost;
   final Color backgroundColor;
-  final Color foregroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -141,20 +137,23 @@ class _StatusBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            isLost ? Icons.search : Icons.check_circle,
-            size: 16,
-            color: foregroundColor,
+          Container(
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
           ),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
-              isLost ? 'Perdido' : 'Encontrado',
+              isLost ? 'PERDIDO' : 'ENCONTRADO',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: textTheme.labelMedium?.copyWith(
-                color: foregroundColor,
-                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -164,35 +163,58 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-/// Registration date with a calendar affordance.
-class _DateLabel extends StatelessWidget {
-  const _DateLabel({required this.label});
+/// Icon with a small gray label above its wrapped value.
+///
+/// When [alignEnd] is true the column mirrors to the trailing edge, so the
+/// date sits flush right while the local stays flush left.
+class _InfoColumn extends StatelessWidget {
+  const _InfoColumn({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.alignEnd = false,
+  });
 
+  final IconData icon;
   final String label;
+  final String value;
+  final bool alignEnd;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final alignment = alignEnd
+        ? CrossAxisAlignment.end
+        : CrossAxisAlignment.start;
 
-    return Row(
+    return Column(
+      crossAxisAlignment: alignment,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          Icons.calendar_today_outlined,
-          size: 14,
-          color: colorScheme.onSurfaceVariant,
-        ),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: textTheme.labelMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: colorScheme.primary),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
             ),
-          ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          softWrap: true,
+          textAlign: alignEnd ? TextAlign.end : TextAlign.start,
+          style: textTheme.bodyMedium,
         ),
       ],
     );
@@ -201,11 +223,12 @@ class _DateLabel extends StatelessWidget {
 
 /// Formats [date] as dd/MM/yyyy in local time.
 ///
-/// Returns null for [LostFoundItem.unknownCreatedAt] so legacy records and
-/// pending server timestamps never show a misleading date.
-String? _formatDate(DateTime date) {
+/// Returns 'Não informada' for [LostFoundItem.unknownCreatedAt] so legacy
+/// records and pending server timestamps keep the two-column alignment
+/// instead of collapsing the date column.
+String _formatDate(DateTime date) {
   if (date.isAtSameMomentAs(LostFoundItem.unknownCreatedAt)) {
-    return null;
+    return 'Não informada';
   }
   final local = date.toLocal();
   final day = local.day.toString().padLeft(2, '0');

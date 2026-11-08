@@ -134,7 +134,7 @@ class ItemListPage extends ConsumerWidget {
                   Expanded(
                     child: Center(
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 720),
+                        constraints: const BoxConstraints(maxWidth: 560),
                         child: RefreshIndicator(
                           onRefresh: handleRefresh,
                           child: ListView.separated(
@@ -185,7 +185,7 @@ class _ListHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
+          constraints: const BoxConstraints(maxWidth: 560),
           child: Row(
             children: [
               Expanded(
@@ -270,12 +270,19 @@ class _SkeletonCard extends StatelessWidget {
       );
     }
 
-    return Card(
-      elevation: 0,
+    return Container(
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colorScheme.outlineVariant),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x2E0B2E5F),
+            blurRadius: 20,
+            offset: Offset(0, 10),
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -284,6 +291,8 @@ class _SkeletonCard extends StatelessWidget {
           children: [
             Row(
               children: [
+                bar(width: 48, height: 12),
+                const Spacer(),
                 Container(
                   width: 110,
                   height: 28,
@@ -292,14 +301,40 @@ class _SkeletonCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
-                const Spacer(),
-                bar(width: 84, height: 12),
+              ],
+            ),
+            const SizedBox(height: 8),
+            bar(width: 200, height: 20),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      bar(width: 80, height: 12),
+                      const SizedBox(height: 8),
+                      bar(width: 120, height: 12),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      bar(width: 80, height: 12),
+                      const SizedBox(height: 8),
+                      bar(width: 100, height: 12),
+                    ],
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
-            bar(width: 180, height: 16),
-            const SizedBox(height: 12),
-            bar(width: 140, height: 12),
+            bar(width: 80, height: 12),
             const SizedBox(height: 8),
             bar(width: double.infinity, height: 12),
             const SizedBox(height: 6),
