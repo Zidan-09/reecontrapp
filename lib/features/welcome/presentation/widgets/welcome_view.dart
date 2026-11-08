@@ -99,7 +99,7 @@ class _WelcomeViewState extends State<WelcomeView>
               child: Text('^', style: textStyle),
             ),
             const SizedBox(height: 8),
-            Text('arraste para cima', style: hintStyle),
+            Text('Arraste para cima', style: hintStyle),
             const SizedBox(height: 32),
           ],
         ),

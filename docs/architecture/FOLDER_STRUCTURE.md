@@ -214,18 +214,18 @@ Não transformar `core/` em um diretório genérico para arquivos cuja responsab
 ```text
 lib/
 └── features/
-    └── lost_found/
+    ├── lost_found/
+    └── welcome/
 ```
 
 Contém as funcionalidades do aplicativo.
 
 A organização por feature permite manter próximos os arquivos que pertencem ao mesmo contexto funcional.
 
-Inicialmente, o Reencontrapp terá apenas a funcionalidade principal:
+O Reencontrapp possui duas funcionalidades:
 
-`lost_found`
-
-Ela será responsável pelo cadastro e pela listagem de objetos perdidos e encontrados.
+- `lost_found`: cadastro e listagem de objetos perdidos e encontrados.
+- `welcome`: tela inicial exibida ao abrir o aplicativo, com acesso à listagem.
 
 Caso novas funcionalidades sejam aprovadas, deverão ser organizadas dentro de `features/`, respeitando a mesma convenção arquitetural quando isso fizer sentido.
 

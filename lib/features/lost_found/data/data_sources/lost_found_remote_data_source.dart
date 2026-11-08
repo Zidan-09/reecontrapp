@@ -8,6 +8,9 @@ class LostFoundRemoteDataSource {
   final FirebaseFirestore _db;
 
   Future<List<LostFoundItemModel>> getAll() async {
+    // GetOptions padrão usa cache-then-server: mostra o que já está em cache
+    // e completa com o servidor. Sem timeout próprio para não abortar uma
+    // leitura lenta porém válida (o SDK já trata offline).
     final snapshot = await _db.collection('items').get();
 
     return snapshot.docs.map(LostFoundItemModel.fromFirestore).toList();
