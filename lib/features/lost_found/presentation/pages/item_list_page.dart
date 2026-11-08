@@ -42,8 +42,6 @@ class _ItemListPageState extends ConsumerState<ItemListPage> {
     final themeMode = ref.watch(themeModeProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final totalCount = itemsAsync.valueOrNull?.length;
-
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 72,
@@ -106,17 +104,7 @@ class _ItemListPageState extends ConsumerState<ItemListPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Count like "3 registros ativos" in photo
-          if (totalCount != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: Text(
-                '$totalCount ${totalCount == 1 ? 'registro ativo' : 'registros ativos'}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
+          SizedBox(height: 12,),
           // Search field
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
