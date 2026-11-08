@@ -104,7 +104,7 @@ class _ItemListPageState extends ConsumerState<ItemListPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 12,),
+          SizedBox(height: 12),
           // Search field
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
